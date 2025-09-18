@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 학생 점수 조회</title>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, onValue, set, push } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqDemoApiKey123456789",
+            authDomain: "student-scores-demo.firebaseapp.com",
+            databaseURL: "https://student-scores-demo-default-rtdb.firebaseio.com",
+            projectId: "student-scores-demo",
+            storageBucket: "student-scores-demo.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456789"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // 전역에서 사용할 수 있도록 window 객체에 할당
+        window.firebase = {
+            database,
+            ref,
+            onValue,
+            set,
+            push
+        };
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .login-section {
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+            padding: 30px;
+        }
+
+        .student-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .subject-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .subject-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .subject-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .subject-content {
+            padding: 20px;
+        }
+
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .score-table th, .score-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .score-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .score-table .score-cell {
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+        }
+
+        .score-table .max-score-cell {
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .total-row {
+            background-color: #e3f2fd;
+            font-weight: bold;
+        }
+
+        .area-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .area-checkbox input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .area-checkbox label {
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .question-btn {
+            background: #ffc107;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .question-btn:hover {
+            background: #e0a800;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .status-complete {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-progress {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-question {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-data h3 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 30px 30px 20px 30px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-header h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .modal-header p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-footer {
+            padding: 20px 30px 30px 30px;
+            text-align: center;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .login-section {
+                padding: 20px;
+            }
+
+            .subject-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 연결 상태 표시 -->
+    <div id="connectionStatus" class="connection-status disconnected">
+        🔄 연결 중...
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>📚 학생 점수 조회</h1>
+            <p>실시간으로 업데이트되는 수행평가 점수를 확인하세요</p>
+        </div>
+
+        <!-- 로그인 섹션 -->
+        <div id="loginSection" class="login-section">
+            <div class="login-form">
+                <h2 style="color: #333; margin-bottom: 30px;">🔐 학생 로그인</h2>
+
+                <div class="input-group">
+                    <label for="studentNumber">학번 (아이디)</label>
+                    <input type="text"
+                           id="studentNumber"
+                           class="input-field"
+                           placeholder="학번을 입력하세요 (예: 30101)"
+                           maxlength="5">
+                </div>
+
+                <div class="input-group">
+                    <label for="studentPassword">비밀번호</label>
+                    <input type="password"
+                           id="studentPassword"
+                           class="input-field"
+                           placeholder="비밀번호를 입력하세요">
+                </div>
+
+                <button id="loginBtn" class="btn" onclick="loginStudent()">
+                    📊 로그인하기
+                </button>
+
+                <div style="margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 8px; text-align: left; font-size: 14px; color: #495057;">
+                    <strong>📋 로그인 정보:</strong><br>
+                    • 학번: 학년(1자리) + 반(2자리) + 번호(2자리)<br>
+                    • 예시: 3학년 1반 1번 → 30101<br><br>
+                    • 초기 비밀번호: 0123<br>
+                    • ⚠️ 첫 로그인 시 반드시 비밀번호를 변경해야 합니다<br>
+                    • 성적 보안을 위해 개인만 아는 비밀번호로 설정하세요
+                </div>
+            </div>
+        </div>
+
+        <!-- 결과 섹션 -->
+        <div id="resultSection" class="result-section">
+            <div id="studentInfo" class="student-info">
+                <!-- 학생 정보가 여기에 표시됩니다 -->
+            </div>
+
+            <div id="scoresContainer">
+                <!-- 점수 카드들이 여기에 표시됩니다 -->
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="logout()" style="width: auto; padding: 10px 30px;">
+                    🔄 다른 학번으로 조회
+                </button>
+            </div>
+        </div>
+
+        <!-- 데이터 없음 -->
+        <div id="noDataSection" class="no-data" style="display: none;">
+            <h3>📚 조회 가능한 점수가 없습니다</h3>
+            <p>선생님이 아직 점수를 등록하지 않았거나<br>해당 학번이 등록되지 않았습니다.</p>
+            <button class="btn" onclick="logout()" style="width: auto; padding: 10px 30px; margin-top: 20px;">
+                🔄 다시 시도
+            </button>
+        </div>
+
+        <!-- 로딩 -->
+        <div id="loadingSection" class="loading" style="display: none;">
+            <h3>🔄 데이터를 불러오는 중...</h3>
+        </div>
+
+        <!-- 비밀번호 변경 모달 -->
+        <div id="passwordChangeModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🔐 비밀번호 변경 필수</h3>
+                    <p style="color: #dc3545; font-weight: bold;">보안을 위해 첫 로그인 시 비밀번호를 반드시 변경해야 합니다.</p>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="currentPassword">현재 비밀번호</label>
+                        <input type="password" id="currentPassword" class="input-field" value="0123" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="input-group">
+                        <label for="newPassword">새 비밀번호</label>
+                        <input type="password" id="newPassword" class="input-field" placeholder="새 비밀번호를 입력하세요 (4자리 이상)">
+                    </div>
+                    <div class="input-group">
+                        <label for="confirmPassword">새 비밀번호 확인</label>
+                        <input type="password" id="confirmPassword" class="input-field" placeholder="새 비밀번호를 다시 입력하세요">
+                    </div>
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin: 15px 0; color: #856404; font-size: 14px;">
+                        <strong>⚠️ 주의사항:</strong><br>
+                        • 비밀번호는 4자리 이상으로 설정하세요<br>
+                        • 다른 학생이 추측하기 어려운 번호로 설정하세요<br>
+                        • 생년월일, 전화번호 등 개인정보 사용은 피하세요<br>
+                        • 비밀번호를 잊어버리면 담임선생님께 문의하세요
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="changePasswordBtn" class="btn" onclick="changePassword()">
+                        ✅ 비밀번호 변경
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentStudent = null;
+        let isConnected = false;
+        let dataListeners = []; // 데이터 리스너들을 저장
+
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            setupEventListeners();
+
+            // Firebase가 로드될 때까지 기다림
+            const checkFirebase = setInterval(() => {
+                if (window.firebase) {
+                    clearInterval(checkFirebase);
+                    initializeFirebase();
+                }
+            }, 100);
+        };
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // Enter 키로 로그인
+            document.getElementById('studentNumber').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('studentPassword').focus();
+                }
+            });
+
+            document.getElementById('studentPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginStudent();
+                }
+            });
+
+            // 학번 입력 시 숫자만 허용
+            document.getElementById('studentNumber').addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+
+            // 비밀번호 변경 모달 이벤트
+            document.getElementById('newPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('confirmPassword').focus();
+                }
+            });
+
+            document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    changePassword();
+                }
+            });
+        }
+
+        // 학번 유효성 검사
+        function validateStudentNumber(studentNumber) {
+            if (!studentNumber || studentNumber.length !== 5) {
+                return false;
+            }
+
+            const grade = parseInt(studentNumber.substring(0, 1));
+            const classNum = parseInt(studentNumber.substring(1, 3));
+            const number = parseInt(studentNumber.substring(3, 5));
+
+            return grade >= 1 && grade <= 3 &&
+                   classNum >= 1 && classNum <= 20 &&
+                   number >= 1 && number <= 40;
+        }
+
+        // 학생 로그인
+        function loginStudent() {
+            const studentNumber = document.getElementById('studentNumber').value.trim();
+            const password = document.getElementById('studentPassword').value.trim();
+
+            if (!validateStudentNumber(studentNumber)) {
+                alert('올바른 학번을 입력해주세요.\n형식: 학년(1자리) + 반(2자리) + 번호(2자리)\n예시: 30101');
+                return;
+            }
+
+            if (!password) {
+                alert('비밀번호를 입력해주세요.');
+                return;
+            }
+
+            showLoading();
+
+            // 비밀번호 검증 후 학생 데이터 조회
+            setTimeout(() => {
+                authenticateAndLoadStudent(studentNumber, password);
+            }, 1000);
+        }
+
+        // 비밀번호 인증 및 학생 데이터 로드
+        function authenticateAndLoadStudent(studentNumber, password) {
+            if (!window.firebase) {
+                alert('Firebase 연결이 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                logout();
+                return;
+            }
+
+            // Firebase에서 학생 정보 및 비밀번호 확인
+            const studentRef = window.firebase.ref(window.firebase.database, `students/${studentNumber}`);
+            window.firebase.onValue(studentRef, (snapshot) => {
+                const studentData = snapshot.val();
+
+                if (!studentData) {
+                    hideLoading();
+                    alert('등록되지 않은 학번입니다.\n담임선생님께 문의하세요.');
+                    return;
+                }
+
+                // 비밀번호 검증
+                const storedPassword = studentData.password || generateDefaultPassword(studentNumber);
+
+                if (password !== storedPassword) {
+                    hideLoading();
+                    alert('비밀번호가 잘못되었습니다.\n초기 비밀번호는 0123입니다.');
+                    return;
+                }
+
+                // 초기 비밀번호인 경우 강제 변경
+                if (storedPassword === '0123') {
+                    hideLoading();
+                    showPasswordChangeModal(studentNumber);
+                    return;
+                }
+
+                // 인증 성공 - 학생 데이터 로드
+                loadStudentData(studentNumber);
+            }, {
+                onlyOnce: true // 한 번만 실행
+            });
+        }
+
+        // 기본 비밀번호 생성
+        function generateDefaultPassword(studentNumber) {
+            return '0123'; // 모든 학생의 초기 비밀번호는 0123
+        }
+
+        // 학생 데이터 로드 (Firebase에서 실시간으로)
+        function loadStudentData(studentNumber) {
+            if (!window.firebase) {
+                alert('Firebase 연결이 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                logout();
+                return;
+            }
+
+            const { database, ref, onValue } = window.firebase;
+
+            try {
+                // 먼저 학생 정보 확인
+                const studentRef = ref(database, `students/${studentNumber}`);
+                onValue(studentRef, (snapshot) => {
+                    const studentData = snapshot.val();
+
+                    if (!studentData) {
+                        showNoData();
+                        return;
+                    }
+
+                    // 학생 데이터 설정
+                    currentStudent = {
+                        student: {
+                            number: studentNumber,
+                            name: studentData.name,
+                            grade: studentData.grade,
+                            class: studentData.class
+                        },
+                        subjects: {}
+                    };
+
+                    // 발행된 과목들 로드
+                    loadPublishedSubjects(studentNumber);
+                }, (error) => {
+                    console.error('학생 데이터 로드 오류:', error);
+                    showNoData();
+                });
+
+            } catch (error) {
+                console.error('Firebase 오류:', error);
+                showNoData();
+            }
+        }
+
+        // 발행된 과목들 로드
+        function loadPublishedSubjects(studentNumber) {
+            const { database, ref, onValue } = window.firebase;
+
+            // 발행된 과목 목록 조회
+            const publishedRef = ref(database, 'publishedSubjects');
+            onValue(publishedRef, (snapshot) => {
+                const publishedSubjects = snapshot.val() || {};
+
+                // 과목 데이터 로드
+                loadSubjectsData(studentNumber, publishedSubjects);
+            });
+        }
+
+        // 과목 데이터 로드
+        function loadSubjectsData(studentNumber, publishedSubjects) {
+            const { database, ref, onValue } = window.firebase;
+
+            // 발행된 과목만 필터링
+            const publishedKeys = Object.keys(publishedSubjects).filter(key => publishedSubjects[key] === true);
+
+            if (publishedKeys.length === 0) {
+                showNoData();
+                return;
+            }
+
+            let loadedCount = 0;
+            currentStudent.subjects = {};
+
+            publishedKeys.forEach(subjectKey => {
+                // 과목 정보 로드
+                const subjectRef = ref(database, `subjects/${subjectKey}`);
+                onValue(subjectRef, (snapshot) => {
+                    const subjectData = snapshot.val();
+
+                    if (subjectData) {
+                        currentStudent.subjects[subjectKey] = {
+                            name: subjectData.name,
+                            grade: subjectData.grade,
+                            areas: subjectData.areas || [],
+                            scores: {},
+                            checked: {},
+                            questions: {}
+                        };
+
+                        // 점수 데이터 로드
+                        loadScoreData(studentNumber, subjectKey);
+
+                        // 체크 상태 로드
+                        loadCheckedData(studentNumber, subjectKey);
+
+                        // 의문사항 로드
+                        loadQuestionData(studentNumber, subjectKey);
+                    }
+
+                    loadedCount++;
+                    if (loadedCount === publishedKeys.length) {
+                        showResults();
+                    }
+                });
+            });
+        }
+
+        // 점수 데이터 로드
+        function loadScoreData(studentNumber, subjectKey) {
+            const { database, ref, onValue } = window.firebase;
+
+            const scoreRef = ref(database, `scores/${subjectKey}/${studentNumber}`);
+            const listener = onValue(scoreRef, (snapshot) => {
+                const scoreData = snapshot.val() || {};
+
+                if (currentStudent.subjects[subjectKey]) {
+                    currentStudent.subjects[subjectKey].scores = scoreData;
+                    updateScoresDisplay();
+                }
+            });
+
+            dataListeners.push(listener);
+        }
+
+        // 체크 상태 로드
+        function loadCheckedData(studentNumber, subjectKey) {
+            const { database, ref, onValue } = window.firebase;
+
+            const checkedRef = ref(database, `studentChecked/${subjectKey}/${studentNumber}`);
+            const listener = onValue(checkedRef, (snapshot) => {
+                const checkedData = snapshot.val() || {};
+
+                if (currentStudent.subjects[subjectKey]) {
+                    currentStudent.subjects[subjectKey].checked = checkedData;
+                    updateScoresDisplay();
+                }
+            });
+
+            dataListeners.push(listener);
+        }
+
+        // 의문사항 로드
+        function loadQuestionData(studentNumber, subjectKey) {
+            const { database, ref, onValue } = window.firebase;
+
+            const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}`);
+            const listener = onValue(questionRef, (snapshot) => {
+                const questionData = snapshot.val() || {};
+
+                if (currentStudent.subjects[subjectKey]) {
+                    currentStudent.subjects[subjectKey].questions = questionData;
+                    updateScoresDisplay();
+                }
+            });
+
+            dataListeners.push(listener);
+        }
+
+        // 결과 표시
+        function showResults() {
+            hideAllSections();
+            document.getElementById('resultSection').style.display = 'block';
+
+            updateStudentInfo();
+            updateScoresDisplay();
+        }
+
+        // 학생 정보 업데이트
+        function updateStudentInfo() {
+            const student = currentStudent.student;
+            document.getElementById('studentInfo').innerHTML = `
+                <h2>🎉 ${student.name} (${student.number})</h2>
+                <p>${student.grade}학년 ${student.class}반 ${student.number.substring(3)}번</p>
+            `;
+        }
+
+        // 점수 표시 업데이트
+        function updateScoresDisplay() {
+            const container = document.getElementById('scoresContainer');
+            const subjects = currentStudent.subjects;
+
+            if (Object.keys(subjects).length === 0) {
+                container.innerHTML = '<div class="no-data"><h3>📚 등록된 점수가 없습니다</h3></div>';
+                return;
+            }
+
+            let html = '';
+            Object.keys(subjects).forEach(subjectKey => {
+                const subject = subjects[subjectKey];
+                html += createSubjectCard(subjectKey, subject);
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 과목 카드 생성
+        function createSubjectCard(subjectKey, subject) {
+            let totalScore = 0;
+            let maxTotalScore = 0;
+            let checkedAreas = 0;
+            let questionCount = 0;
+
+            let tableRows = '';
+            subject.areas.forEach(area => {
+                const score = subject.scores[area.name] || 0;
+                const isChecked = subject.checked[area.name] || false;
+                const hasQuestion = subject.questions[area.name];
+
+                totalScore += score;
+                maxTotalScore += area.maxScore;
+                if (isChecked) checkedAreas++;
+                if (hasQuestion) questionCount++;
+
+                tableRows += `
+                    <tr>
+                        <td>
+                            ${area.name}
+                            <div class="area-checkbox">
+                                <input type="checkbox" id="check_${subjectKey}_${area.name}"
+                                       ${isChecked ? 'checked' : ''}
+                                       onchange="markAreaAsChecked('${subjectKey}', '${area.name}')">
+                                <label for="check_${subjectKey}_${area.name}">확인완료</label>
+                            </div>
+                        </td>
+                        <td class="score-cell">
+                            ${score}점
+                            <button class="question-btn" onclick="askQuestion('${subjectKey}', '${area.name}', ${score})">?</button>
+                        </td>
+                        <td class="max-score-cell">${area.maxScore}점</td>
+                    </tr>
+                `;
+            });
+
+            // 상태 뱃지
+            let statusBadge = '';
+            if (questionCount > 0) {
+                statusBadge = `<div class="status-badge status-question">❓ 의문사항 ${questionCount}건</div>`;
+            } else if (checkedAreas === subject.areas.length) {
+                statusBadge = `<div class="status-badge status-complete">✅ 모든 영역 확인 완료</div>`;
+            } else {
+                statusBadge = `<div class="status-badge status-progress">⏳ 확인 진행 중 (${checkedAreas}/${subject.areas.length})</div>`;
+            }
+
+            return `
+                <div class="subject-card">
+                    <div class="subject-header">
+                        <h3 class="subject-title">${subject.grade}학년 ${subject.name}</h3>
+                    </div>
+                    <div class="subject-content">
+                        <table class="score-table">
+                            <thead>
+                                <tr>
+                                    <th>영역</th>
+                                    <th style="text-align: center;">점수</th>
+                                    <th style="text-align: center;">만점</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                                <tr class="total-row">
+                                    <td><strong>총점</strong></td>
+                                    <td class="score-cell"><strong>${totalScore}점</strong></td>
+                                    <td class="max-score-cell"><strong>${maxTotalScore}점</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        ${statusBadge}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 영역 확인 표시
+        function markAreaAsChecked(subjectKey, areaName) {
+            const checkbox = document.getElementById(`check_${subjectKey}_${areaName}`);
+
+            if (currentStudent.subjects[subjectKey]) {
+                currentStudent.subjects[subjectKey].checked[areaName] = checkbox.checked;
+
+                // 파이어베이스에 실시간 업데이트
+                updateCheckedStatus(subjectKey, areaName, checkbox.checked);
+            }
+        }
+
+        // 의문사항 제기
+        function askQuestion(subjectKey, areaName, score) {
+            const subject = currentStudent.subjects[subjectKey];
+            const question = prompt(`📝 ${subject.grade}학년 ${subject.name} > ${areaName} (${score}점)\n\n궁금한 점이나 의문사항을 입력하세요:`);
+
+            if (question && question.trim()) {
+                subject.questions[areaName] = question.trim();
+
+                // 파이어베이스에 실시간 업데이트
+                updateQuestionData(subjectKey, areaName, question.trim());
+
+                alert(`📩 의문사항이 선생님께 전달되었습니다.\n\n${areaName}: ${question.trim()}`);
+            }
+        }
+
+        // 체크 상태 업데이트
+        function updateCheckedStatus(subjectKey, areaName, checked) {
+            if (!window.firebase || !currentStudent) return;
+
+            const { database, ref, set } = window.firebase;
+            const studentNumber = currentStudent.student.number;
+
+            const checkedRef = ref(database, `studentChecked/${subjectKey}/${studentNumber}/${areaName}`);
+            set(checkedRef, checked).catch(error => {
+                console.error('체크 상태 업데이트 오류:', error);
+            });
+        }
+
+        // 의문사항 업데이트
+        function updateQuestionData(subjectKey, areaName, question) {
+            if (!window.firebase || !currentStudent) return;
+
+            const { database, ref, set } = window.firebase;
+            const studentNumber = currentStudent.student.number;
+
+            const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
+            set(questionRef, question).catch(error => {
+                console.error('의문사항 업데이트 오류:', error);
+            });
+        }
+
+        // 섹션 표시 관리
+        function showLoading() {
+            hideAllSections();
+            document.getElementById('loadingSection').style.display = 'block';
+        }
+
+        function showNoData() {
+            hideAllSections();
+            document.getElementById('noDataSection').style.display = 'block';
+        }
+
+        function hideAllSections() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('noDataSection').style.display = 'none';
+            document.getElementById('loadingSection').style.display = 'none';
+        }
+
+        function logout() {
+            // 모든 Firebase 리스너 정리
+            dataListeners.forEach(listener => {
+                if (typeof listener === 'function') {
+                    listener(); // 리스너 해제
+                }
+            });
+            dataListeners = [];
+
+            currentStudent = null;
+            document.getElementById('studentNumber').value = '';
+            document.getElementById('studentPassword').value = '';
+            hideAllSections();
+            document.getElementById('loginSection').style.display = 'block';
+        }
+
+        // 비밀번호 변경 모달 표시
+        function showPasswordChangeModal(studentNumber) {
+            currentStudent = { studentNumber }; // 임시로 학번 저장
+            document.getElementById('passwordChangeModal').style.display = 'flex';
+            document.getElementById('newPassword').focus();
+        }
+
+        // 비밀번호 변경
+        function changePassword() {
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+            if (!newPassword) {
+                alert('새 비밀번호를 입력해주세요.');
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                alert('비밀번호는 4자리 이상이어야 합니다.');
+                return;
+            }
+
+            if (newPassword === '0123') {
+                alert('초기 비밀번호와 같은 비밀번호는 사용할 수 없습니다.\n보안을 위해 다른 비밀번호를 설정해주세요.');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('새 비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            if (!window.firebase) {
+                alert('연결 오류가 발생했습니다. 다시 시도해주세요.');
+                return;
+            }
+
+            // Firebase에서 비밀번호 업데이트
+            const studentRef = window.firebase.ref(window.firebase.database, `students/${currentStudent.studentNumber}/password`);
+            window.firebase.set(studentRef, newPassword).then(() => {
+                // 모달 닫기
+                document.getElementById('passwordChangeModal').style.display = 'none';
+
+                // 입력 필드 초기화
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+
+                alert('비밀번호가 성공적으로 변경되었습니다!\n이제 점수를 조회할 수 있습니다.');
+
+                // 학생 데이터 로드
+                showLoading();
+                setTimeout(() => {
+                    loadStudentData(currentStudent.studentNumber);
+                }, 500);
+
+            }).catch(error => {
+                console.error('비밀번호 변경 오류:', error);
+                alert('비밀번호 변경 중 오류가 발생했습니다. 다시 시도해주세요.');
+            });
+        }
+
+        // 연결 상태 업데이트
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusElement = document.getElementById('connectionStatus');
+
+            if (connected) {
+                statusElement.className = 'connection-status connected';
+                statusElement.textContent = '🟢 실시간 연결됨';
+            } else {
+                statusElement.className = 'connection-status disconnected';
+                statusElement.textContent = '🔴 연결 끊김';
+            }
+        }
+
+        // 파이어베이스 초기화
+        function initializeFirebase() {
+            console.log('Firebase 초기화 중...');
+
+            if (!window.firebase) {
+                console.error('Firebase가 로드되지 않았습니다.');
+                updateConnectionStatus(false);
+                return;
+            }
+
+            try {
+                const { database, ref, onValue } = window.firebase;
+
+                // 연결 상태 모니터링
+                const connectedRef = ref(database, '.info/connected');
+                onValue(connectedRef, (snapshot) => {
+                    const connected = snapshot.val() === true;
+                    updateConnectionStatus(connected);
+
+                    if (connected) {
+                        console.log('Firebase에 연결되었습니다.');
+                    } else {
+                        console.log('Firebase 연결이 끊어졌습니다.');
+                    }
+                });
+
+                console.log('Firebase 초기화 완료');
+
+            } catch (error) {
+                console.error('Firebase 초기화 오류:', error);
+                updateConnectionStatus(false);
+            }
+        }
+    </script>
+</body>
+</html>
