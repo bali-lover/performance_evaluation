@@ -102,7 +102,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         let app = null;
         let database = null;
@@ -380,7 +380,8 @@
                 if (isChecked) {
                     set(confirmationRef, true);
                 } else {
-                    set(confirmationRef, null);
+                    // 체크 해제시 완전히 삭제
+                    remove(confirmationRef);
                 }
 
                 console.log(`확인 상태 업데이트: ${subjectKey}/${areaName} = ${isChecked}`);
@@ -393,14 +394,11 @@
 
             if (question && question.trim()) {
                 const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
-                set(questionRef, {
-                    question: question.trim(),
-                    date: new Date().toLocaleString('ko-KR'),
-                    timestamp: Date.now()
-                });
+                // 교사용 시스템과 호환되도록 문자열로 저장
+                set(questionRef, question.trim());
 
                 alert('문의사항이 등록되었습니다.');
-                console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question}`);
+                console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question.trim()}`);
             }
         }
 
