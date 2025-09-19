@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.googleapis.com; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' https: wss: https://*.firebasedatabase.app https://*.firebaseapp.com https://*.googleapis.com;">
-    <title>📚 학생 점수 조회 v2 - Firebase 연결 테스트</title>
+    <title>📚 학생 점수 조회</title>
 
     <style>
         * {
@@ -97,19 +97,6 @@
             margin-top: 20px;
         }
 
-        .debug-tools {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .debug-btn {
-            margin: 5px;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
     </style>
 
     <!-- Firebase SDK -->
@@ -378,57 +365,6 @@
             }, 100);
         }
 
-        // Firebase 데이터 구조 디버그
-        function debugFirebaseData() {
-            if (!database) {
-                showStatus('❌ Firebase가 연결되지 않았습니다.', 'error');
-                return;
-            }
-
-            showStatus('🔍 Firebase 데이터 구조를 확인하는 중...', 'info');
-
-            // 전체 데이터 구조 확인
-            const rootRef = ref(database, '/');
-            onValue(rootRef, (snapshot) => {
-                const data = snapshot.val();
-                console.log('=== Firebase 전체 데이터 ===');
-                console.log(data);
-
-                let debugHtml = '<h4>🔍 Firebase 데이터 구조</h4>';
-                debugHtml += '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">';
-                debugHtml += JSON.stringify(data, null, 2);
-                debugHtml += '</pre>';
-
-                // 기존 점수 표시 영역에 디버그 정보 표시
-                const scoresSection = document.getElementById('scoresSection');
-                const scoresContent = document.getElementById('scoresContent');
-
-                if (scoresSection && scoresContent) {
-                    scoresSection.style.display = 'block';
-                    scoresContent.innerHTML = debugHtml;
-                } else {
-                    console.error('디버그 정보를 표시할 요소를 찾을 수 없습니다.');
-                }
-
-                showStatus('✅ 데이터 구조 확인 완료! 콘솔과 화면을 확인하세요.', 'success');
-            }, { onlyOnce: true });
-        }
-
-        // 모든 캐시 및 데이터 삭제
-        function clearAllData() {
-            if (confirm('모든 캐시와 localStorage 데이터를 삭제하고 페이지를 새로고침합니다. 계속하시겠습니까?')) {
-                // localStorage 완전 삭제
-                localStorage.clear();
-
-                // sessionStorage 삭제
-                sessionStorage.clear();
-
-                console.log('모든 브라우저 저장 데이터가 삭제되었습니다.');
-
-                // 페이지 새로고침 (캐시 무시)
-                window.location.reload(true);
-            }
-        }
 
         // 확인 체크박스 토글
         function toggleConfirmation(subjectKey, studentNumber, areaName) {
@@ -506,8 +442,6 @@
 
         // 전역 함수로 노출
         window.loginStudent = loginStudent;
-        window.debugFirebaseData = debugFirebaseData;
-        window.clearAllData = clearAllData;
         window.toggleConfirmation = toggleConfirmation;
         window.openQuestionModal = openQuestionModal;
 
@@ -521,7 +455,7 @@
 <body>
     <!-- 헤더 -->
     <div class="header">
-        <h1>📚 학생 점수 조회 v2</h1>
+        <h1>📚 학생 점수 조회</h1>
         <div class="login-form">
             <input type="number" id="studentNumber" class="login-input" placeholder="학번" min="1">
             <input type="password" id="studentPassword" class="login-input" placeholder="비밀번호">
@@ -544,15 +478,6 @@
             </div>
         </div>
 
-        <!-- 디버그 도구 (개발용) -->
-        <div class="debug-tools">
-            <button onclick="debugFirebaseData()" class="debug-btn" style="background: #28a745; color: white;">
-                🔍 데이터 확인
-            </button>
-            <button onclick="clearAllData()" class="debug-btn" style="background: #dc3545; color: white;">
-                🗑️ 캐시 삭제
-            </button>
-        </div>
     </div>
 </body>
 </html>
