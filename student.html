@@ -157,12 +157,8 @@
                     return false;
                 }
 
-                // 설정 정보 표시
-                document.getElementById('config').innerHTML =
-                    `<strong>Firebase 설정:</strong><br>
-                     API Key: ${config.apiKey}<br>
-                     Project ID: ${config.projectId}<br>
-                     Database URL: ${config.databaseURL}`;
+                // 설정 정보는 콘솔에만 표시
+                console.log('Firebase 설정:', config);
 
                 // Firebase 앱 초기화
                 app = initializeApp(config);
