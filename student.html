@@ -7,26 +7,81 @@
     <title>📚 학생 점수 조회 v2 - Firebase 연결 테스트</title>
 
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .login-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .login-input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 120px;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .login-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #0056b3;
         }
 
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
 
         .status {
             padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
+            margin: 20px 0;
+            border-radius: 8px;
             font-weight: bold;
+            text-align: center;
         }
 
         .success { background: #d4edda; color: #155724; }
@@ -34,12 +89,25 @@
         .warning { background: #fff3cd; color: #856404; }
         .info { background: #d1ecf1; color: #0c5460; }
 
-        .config-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-family: monospace;
+        .scores-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .debug-tools {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .debug-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 12px;
         }
     </style>
@@ -106,9 +174,7 @@
                 const testRef = ref(database, '.info/connected');
                 onValue(testRef, (snapshot) => {
                     if (snapshot.val() === true) {
-                        showStatus('🎉 Firebase 데이터베이스 연결 성공!', 'success');
-                        // 연결 성공시 로그인 폼 표시
-                        document.getElementById('loginSection').style.display = 'block';
+                        showStatus('🎉 Firebase 데이터베이스 연결 성공! 상단에서 로그인하세요.', 'success');
                     } else {
                         showStatus('⚠️ Firebase 데이터베이스 연결이 끊어짐', 'warning');
                     }
@@ -296,9 +362,26 @@
             }, { onlyOnce: true });
         }
 
+        // 모든 캐시 및 데이터 삭제
+        function clearAllData() {
+            if (confirm('모든 캐시와 localStorage 데이터를 삭제하고 페이지를 새로고침합니다. 계속하시겠습니까?')) {
+                // localStorage 완전 삭제
+                localStorage.clear();
+
+                // sessionStorage 삭제
+                sessionStorage.clear();
+
+                console.log('모든 브라우저 저장 데이터가 삭제되었습니다.');
+
+                // 페이지 새로고침 (캐시 무시)
+                window.location.reload(true);
+            }
+        }
+
         // 전역 함수로 노출
         window.loginStudent = loginStudent;
         window.debugFirebaseData = debugFirebaseData;
+        window.clearAllData = clearAllData;
 
         // 페이지 로드 시 실행
         window.addEventListener('DOMContentLoaded', () => {
@@ -308,61 +391,39 @@
     </script>
 </head>
 <body>
-    <div class="container">
+    <!-- 헤더 -->
+    <div class="header">
         <h1>📚 학생 점수 조회 v2</h1>
-        <h2>Firebase 연결 테스트</h2>
+        <div class="login-form">
+            <input type="number" id="studentNumber" class="login-input" placeholder="학번" min="1">
+            <input type="password" id="studentPassword" class="login-input" placeholder="비밀번호">
+            <button onclick="loginStudent()" class="login-btn">📊 점수 확인</button>
+        </div>
+    </div>
 
+    <!-- 메인 컨테이너 -->
+    <div class="container">
+        <!-- 상태 메시지 -->
         <div id="status">
-            <div class="status info">🔄 페이지 로딩 중...</div>
-        </div>
-
-        <div id="config" class="config-info">
-            설정 정보를 불러오는 중...
-        </div>
-
-        <!-- 학생 로그인 폼 -->
-        <div id="loginSection" style="display: none; margin-top: 30px;">
-            <hr>
-            <h3>🎓 학생 로그인</h3>
-
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">학번:</label>
-                <input type="number" id="studentNumber" placeholder="학번 입력"
-                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-            </div>
-
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">비밀번호:</label>
-                <input type="password" id="studentPassword" placeholder="비밀번호 입력"
-                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-            </div>
-
-            <button onclick="loginStudent()"
-                    style="background: #007bff; color: white; border: none; padding: 12px 24px;
-                           border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-bottom: 10px;">
-                📊 점수 확인
-            </button>
-
-            <button onclick="debugFirebaseData()"
-                    style="background: #28a745; color: white; border: none; padding: 8px 16px;
-                           border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%;">
-                🔍 Firebase 데이터 구조 확인
-            </button>
+            <div class="status info">🔄 Firebase 연결 중...</div>
         </div>
 
         <!-- 점수 표시 영역 -->
-        <div id="scoresSection" style="display: none; margin-top: 30px;">
-            <hr>
-            <h3>📊 내 점수</h3>
+        <div id="scoresSection" class="scores-section" style="display: none;">
+            <h2 style="margin-bottom: 20px; color: #333;">📊 내 점수</h2>
             <div id="scoresContent">
                 <div class="status info">점수를 불러오는 중...</div>
             </div>
         </div>
 
-        <div style="margin-top: 20px; font-size: 14px; color: #666;">
-            <strong>테스트 방법:</strong><br>
-            URL에 다음과 같이 파라미터를 추가하세요:<br>
-            <code>?apiKey=YOUR_API_KEY&projectId=YOUR_PROJECT_ID</code>
+        <!-- 디버그 도구 (개발용) -->
+        <div class="debug-tools">
+            <button onclick="debugFirebaseData()" class="debug-btn" style="background: #28a745; color: white;">
+                🔍 데이터 확인
+            </button>
+            <button onclick="clearAllData()" class="debug-btn" style="background: #dc3545; color: white;">
+                🗑️ 캐시 삭제
+            </button>
         </div>
     </div>
 </body>
