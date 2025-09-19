@@ -1262,8 +1262,11 @@
                        style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
             </div>
 
+            <div id="connectionStatus" style="margin: 15px 0; padding: 10px; border-radius: 4px; display: none;"></div>
+
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button onclick="closeFirebaseModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">취소</button>
+                <button onclick="testFirebaseConnection()" style="padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer;">🔍 연결 테스트</button>
                 <button onclick="saveUserFirebaseConfig()" style="padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">💾 저장</button>
             </div>
         </div>
@@ -3257,6 +3260,72 @@
 
         function closeFirebaseModal() {
             document.getElementById('firebaseSettingsModal').style.display = 'none';
+        }
+
+        async function testFirebaseConnection() {
+            const apiKey = document.getElementById('firebaseApiKey').value.trim();
+            const projectId = document.getElementById('firebaseProjectId').value.trim();
+
+            if (!apiKey || !projectId) {
+                showConnectionStatus('API Key와 Project ID를 입력해주세요.', 'error');
+                return;
+            }
+
+            showConnectionStatus('🔍 Firebase 연결을 테스트하는 중...', 'info');
+
+            try {
+                // Database URL 생성
+                const databaseURL = `https://${projectId}-default-rtdb.asia-southeast1.firebasedatabase.app/`;
+
+                // 간단한 테스트 요청
+                const testUrl = `${databaseURL}.json?auth=${apiKey}`;
+
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    showConnectionStatus('✅ Firebase 연결 성공!', 'success');
+                    console.log('Firebase 연결 성공:', await response.text());
+                } else {
+                    const errorText = await response.text();
+                    console.error('Firebase 오류:', errorText);
+
+                    if (response.status === 401) {
+                        showConnectionStatus('❌ 인증 오류: API Key를 확인해주세요.', 'error');
+                    } else if (response.status === 404) {
+                        showConnectionStatus('❌ 데이터베이스를 찾을 수 없습니다. Project ID와 지역을 확인해주세요.', 'error');
+                    } else {
+                        showConnectionStatus(`❌ 연결 실패 (${response.status}): ${errorText}`, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('연결 테스트 오류:', error);
+                showConnectionStatus(`❌ 네트워크 오류: ${error.message}`, 'error');
+            }
+        }
+
+        function showConnectionStatus(message, type) {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = message;
+
+            if (type === 'success') {
+                statusDiv.style.backgroundColor = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.style.border = '1px solid #c3e6cb';
+            } else if (type === 'error') {
+                statusDiv.style.backgroundColor = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.style.border = '1px solid #f5c6cb';
+            } else if (type === 'info') {
+                statusDiv.style.backgroundColor = '#d1ecf1';
+                statusDiv.style.color = '#0c5460';
+                statusDiv.style.border = '1px solid #bee5eb';
+            }
         }
 
         function saveUserFirebaseConfig() {
