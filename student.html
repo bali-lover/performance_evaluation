@@ -123,7 +123,9 @@
         // 상태 메시지 표시
         function showStatus(message, type = 'info') {
             const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            }
             console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
@@ -187,8 +189,16 @@
 
         // 학생 로그인
         async function loginStudent() {
-            const studentNumber = document.getElementById('studentNumber').value;
-            const studentPassword = document.getElementById('studentPassword').value;
+            const studentNumberEl = document.getElementById('studentNumber');
+            const studentPasswordEl = document.getElementById('studentPassword');
+
+            if (!studentNumberEl || !studentPasswordEl) {
+                console.error('로그인 폼 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            const studentNumber = studentNumberEl.value;
+            const studentPassword = studentPasswordEl.value;
 
             if (!studentNumber) {
                 showStatus('❌ 학번을 입력하세요.', 'error');
@@ -239,7 +249,10 @@
                 showStatus('🔄 점수를 불러오는 중...', 'info');
 
                 // 점수 섹션 표시
-                document.getElementById('scoresSection').style.display = 'block';
+                const scoresSection = document.getElementById('scoresSection');
+                if (scoresSection) {
+                    scoresSection.style.display = 'block';
+                }
 
                 // 과목과 점수 데이터 불러오기
                 const subjectsRef = ref(database, 'subjects');
@@ -269,6 +282,10 @@
         // 점수 표시
         function displayStudentScores(studentNumber, studentName, subjects, scores) {
             const scoresContent = document.getElementById('scoresContent');
+            if (!scoresContent) {
+                console.error('scoresContent 요소를 찾을 수 없습니다.');
+                return;
+            }
 
             let hasScores = false;
             let html = `<div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
@@ -351,8 +368,14 @@
 
                 // 기존 점수 표시 영역에 디버그 정보 표시
                 const scoresSection = document.getElementById('scoresSection');
-                scoresSection.style.display = 'block';
-                document.getElementById('scoresContent').innerHTML = debugHtml;
+                const scoresContent = document.getElementById('scoresContent');
+
+                if (scoresSection && scoresContent) {
+                    scoresSection.style.display = 'block';
+                    scoresContent.innerHTML = debugHtml;
+                } else {
+                    console.error('디버그 정보를 표시할 요소를 찾을 수 없습니다.');
+                }
 
                 showStatus('✅ 데이터 구조 확인 완료! 콘솔과 화면을 확인하세요.', 'success');
             }, { onlyOnce: true });
