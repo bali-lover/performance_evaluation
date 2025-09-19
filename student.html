@@ -115,7 +115,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         let app = null;
         let database = null;
@@ -311,9 +311,22 @@
                         const scoreText = areaScore ? `${areaScore}점` : '미입력';
                         const scoreColor = areaScore ? '#28a745' : '#6c757d';
 
-                        html += `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
                                    <span>${area.name}</span>
-                                   <span style="color: ${scoreColor}; font-weight: bold;">${scoreText} / ${area.maxScore}점</span>
+                                   <div style="display: flex; align-items: center; gap: 15px;">
+                                       <span style="color: ${scoreColor}; font-weight: bold;">${scoreText} / ${area.maxScore}점</span>
+                                       ${areaScore ? `
+                                           <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666;">
+                                               <input type="checkbox" onchange="toggleConfirmation('${subjectKey}', '${studentNumber}', '${area.name}')"
+                                                      id="confirm_${subjectKey}_${area.name}" style="margin: 0;">
+                                               확인
+                                           </label>
+                                           <button onclick="openQuestionModal('${subjectKey}', '${area.name}', '${studentNumber}')"
+                                                   style="background: #ffc107; border: none; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">
+                                               문의
+                                           </button>
+                                       ` : ''}
+                                   </div>
                                  </div>`;
 
                         if (areaScore) hasScores = true;
@@ -324,8 +337,23 @@
                     const scoreText = totalScore ? `${totalScore}점` : '미입력';
                     const scoreColor = totalScore ? '#28a745' : '#6c757d';
 
-                    html += `<div style="text-align: center; font-size: 18px; color: ${scoreColor}; font-weight: bold;">
-                               ${scoreText}
+                    html += `<div style="text-align: center;">
+                               <div style="font-size: 18px; color: ${scoreColor}; font-weight: bold; margin-bottom: 10px;">
+                                   ${scoreText}
+                               </div>
+                               ${totalScore ? `
+                                   <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+                                       <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666;">
+                                           <input type="checkbox" onchange="toggleConfirmation('${subjectKey}', '${studentNumber}', 'total')"
+                                                  id="confirm_${subjectKey}_total" style="margin: 0;">
+                                           확인
+                                       </label>
+                                       <button onclick="openQuestionModal('${subjectKey}', 'total', '${studentNumber}')"
+                                               style="background: #ffc107; border: none; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                           문의
+                                       </button>
+                                   </div>
+                               ` : ''}
                              </div>`;
 
                     if (totalScore) hasScores = true;
@@ -343,6 +371,11 @@
 
             scoresContent.innerHTML = html;
             showStatus(`✅ 점수 조회 완료!`, 'success');
+
+            // 확인 상태 불러오기
+            setTimeout(() => {
+                loadConfirmationStatus(studentNumber, subjects, scores);
+            }, 100);
         }
 
         // Firebase 데이터 구조 디버그
@@ -397,10 +430,86 @@
             }
         }
 
+        // 확인 체크박스 토글
+        function toggleConfirmation(subjectKey, studentNumber, areaName) {
+            if (!database) return;
+
+            const checkboxId = `confirm_${subjectKey}_${areaName}`;
+            const checkbox = document.getElementById(checkboxId);
+
+            if (checkbox) {
+                const isChecked = checkbox.checked;
+                const confirmationRef = ref(database, `studentChecked/${subjectKey}/${studentNumber}/${areaName}`);
+
+                if (isChecked) {
+                    set(confirmationRef, true);
+                } else {
+                    set(confirmationRef, null);
+                }
+
+                console.log(`확인 상태 업데이트: ${subjectKey}/${areaName} = ${isChecked}`);
+            }
+        }
+
+        // 문의 모달 열기
+        function openQuestionModal(subjectKey, areaName, studentNumber) {
+            const question = prompt(`${areaName} 점수에 대한 문의사항을 입력하세요:`);
+
+            if (question && question.trim()) {
+                const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
+                set(questionRef, {
+                    question: question.trim(),
+                    date: new Date().toLocaleString('ko-KR'),
+                    timestamp: Date.now()
+                });
+
+                alert('문의사항이 등록되었습니다.');
+                console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question}`);
+            }
+        }
+
+        // 확인 상태 불러오기
+        function loadConfirmationStatus(studentNumber, subjects, scores) {
+            if (!database) return;
+
+            const confirmationRef = ref(database, `studentChecked`);
+            onValue(confirmationRef, (snapshot) => {
+                const confirmations = snapshot.val() || {};
+
+                // 각 과목별로 확인 상태 설정
+                for (const subjectKey in subjects) {
+                    const subject = subjects[subjectKey];
+                    const subjectConfirmations = confirmations[subjectKey] && confirmations[subjectKey][studentNumber];
+
+                    if (subject.areas && subject.areas.length > 0) {
+                        // 영역별 확인 상태
+                        subject.areas.forEach(area => {
+                            const checkboxId = `confirm_${subjectKey}_${area.name}`;
+                            const checkbox = document.getElementById(checkboxId);
+
+                            if (checkbox && subjectConfirmations && subjectConfirmations[area.name]) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    } else {
+                        // 단일 점수 확인 상태
+                        const checkboxId = `confirm_${subjectKey}_total`;
+                        const checkbox = document.getElementById(checkboxId);
+
+                        if (checkbox && subjectConfirmations && subjectConfirmations.total) {
+                            checkbox.checked = true;
+                        }
+                    }
+                }
+            }, { onlyOnce: true });
+        }
+
         // 전역 함수로 노출
         window.loginStudent = loginStudent;
         window.debugFirebaseData = debugFirebaseData;
         window.clearAllData = clearAllData;
+        window.toggleConfirmation = toggleConfirmation;
+        window.openQuestionModal = openQuestionModal;
 
         // 페이지 로드 시 실행
         window.addEventListener('DOMContentLoaded', () => {
