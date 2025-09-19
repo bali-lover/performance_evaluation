@@ -15,12 +15,29 @@
 
         // 전역 변수 초기화
         window.firebase = null;
+        window.firebaseInitialized = false;
 
         // Firebase 초기화 함수
-        async function initializeFirebase(databaseURL) {
+        async function initializeFirebase() {
             try {
+                // localStorage에서 설정 불러오기
+                const apiKey = localStorage.getItem('firebaseApiKey');
+                const authDomain = localStorage.getItem('firebaseAuthDomain');
+                const databaseURL = localStorage.getItem('userDatabaseURL');
+                const projectId = localStorage.getItem('firebaseProjectId');
+                const storageBucket = localStorage.getItem('firebaseStorageBucket');
+
+                if (!apiKey || !databaseURL || !projectId) {
+                    console.error('Firebase 설정이 없습니다.');
+                    return false;
+                }
+
                 const firebaseConfig = {
-                    databaseURL: databaseURL
+                    apiKey: apiKey,
+                    authDomain: authDomain,
+                    databaseURL: databaseURL,
+                    projectId: projectId,
+                    storageBucket: storageBucket
                 };
 
                 const app = initializeApp(firebaseConfig);
@@ -38,14 +55,32 @@
                 };
 
                 firebaseInitialized = true;
+                window.firebaseInitialized = true;
+                console.log('Firebase 초기화 성공');
+
+                // QR 코드 버튼 표시
+                const qrBtn = document.getElementById('qrCodeBtn');
+                if (qrBtn) {
+                    qrBtn.style.display = 'inline-block';
+                }
+
                 return true;
             } catch (error) {
                 console.error('Firebase 초기화 오류:', error);
                 window.firebase = null;
                 firebaseInitialized = false;
+                window.firebaseInitialized = false;
                 return false;
             }
         }
+
+        // 전역 함수로 노출
+        window.initializeFirebase = initializeFirebase;
+
+        // 페이지 로드 시 Firebase 초기화 시도
+        window.addEventListener('load', async () => {
+            await initializeFirebase();
+        });
     </script>
     <style>
         body {
@@ -1022,6 +1057,9 @@
                 <button class="btn btn-secondary" onclick="openFirebaseSettings()" id="firebaseSettingsBtn">
                     ⚙️ Firebase 설정
                 </button>
+                <button class="btn btn-primary" onclick="openQRModal()" id="qrCodeBtn" style="display: none;">
+                    📱 학생 QR 코드
+                </button>
             </div>
         </div>
 
@@ -1264,10 +1302,39 @@
 
             <div id="connectionStatus" style="margin: 15px 0; padding: 10px; border-radius: 4px; display: none;"></div>
 
+            <div style="margin-bottom: 15px; padding: 15px; background: #e8f4f8; border-radius: 6px; border: 1px solid #bee5eb;">
+                <h4 style="margin: 0 0 10px 0; color: #0c5460;">🎓 학생용 링크 생성</h4>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Firebase 설정이 저장된 후 학생들이 사용할 수 있는 링크를 생성할 수 있습니다.</p>
+                <button onclick="generateStudentLink()" style="padding: 8px 16px; border: none; background: #17a2b8; color: white; border-radius: 4px; cursor: pointer; font-size: 14px;">🔗 학생용 링크 생성</button>
+            </div>
+
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button onclick="closeFirebaseModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">취소</button>
                 <button onclick="testFirebaseConnection()" style="padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer;">🔍 연결 테스트</button>
                 <button onclick="saveUserFirebaseConfig()" style="padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">💾 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR 코드 모달 -->
+    <div id="qrModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; width: 400px; max-width: 90%; text-align: center;">
+            <h3 style="margin: 0 0 20px 0; color: #007bff;">📱 학생 접속용 QR 코드</h3>
+
+            <p style="color: #666; margin-bottom: 20px;">학생들에게 이 QR 코드를 보여주어 점수 조회 시스템에 접속하게 하세요.</p>
+
+            <div id="qr-container" style="margin: 20px 0; min-height: 250px; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; border-radius: 8px;">
+                <div style="color: #999;">QR 코드 생성 중...</div>
+            </div>
+
+            <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">직접 접속 링크:</p>
+                <a id="qr-url" href="#" target="_blank" style="color: #007bff; font-size: 12px; word-break: break-all;"></a>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button onclick="closeQRModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">닫기</button>
+                <button onclick="copyQRLink()" style="padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer;">📋 링크 복사</button>
             </div>
         </div>
     </div>
@@ -1290,11 +1357,11 @@
 
         // 페이지 로드 시 초기화
         window.onload = async function() {
-            loadStudents();
-            loadSubjects();
-            loadScores();
+            await loadStudents();
+            await loadSubjects();
+            await loadScores();
             loadPublishedSubjects();
-            loadStudentChecked();
+            await loadStudentChecked();
             loadStudentQuestions();
 
             // 모든 과목의 기본값을 허용으로 설정
@@ -1333,11 +1400,17 @@
             if (savedURL) {
                 showConnectionStatus('🔗 Firebase 연결 중...', 'warning');
 
-                const success = await initializeFirebase(savedURL);
+                const success = await window.initializeFirebase();
 
                 if (success) {
                     showConnectionStatus('🟢 Firebase 연결됨', 'success');
                     setupFirebaseListeners();
+
+                    // Firebase 연결 후 데이터 다시 불러오기
+                    await loadStudents();
+                    await loadSubjects();
+                    await loadScores();
+                    await loadStudentChecked();
                 } else {
                     showConnectionStatus('❌ Firebase 연결 실패', 'error');
                 }
@@ -2951,7 +3024,21 @@
             if (!currentScoreSubject) return;
             if (!confirm(`${currentScoreSubject} 과목의 모든 점수를 삭제하시겠습니까?`)) return;
 
+            // 점수 초기화
             scores[currentScoreSubject] = {};
+
+            // 해당 과목의 확인 상태도 초기화
+            if (studentChecked[currentScoreSubject]) {
+                studentChecked[currentScoreSubject] = {};
+                saveStudentChecked();
+            }
+
+            // 해당 과목의 의문 사항도 초기화
+            if (studentQuestions[currentScoreSubject]) {
+                studentQuestions[currentScoreSubject] = {};
+                saveStudentQuestions();
+            }
+
             generateScoreTable();
             saveScores();
         }
@@ -2964,23 +3051,75 @@
             syncToFirebase('students', students);
         }
 
-        function loadStudents() {
+        async function loadStudents() {
+            // 먼저 localStorage에서 불러오기
             const saved = localStorage.getItem('students');
             if (saved) {
                 students = JSON.parse(saved);
                 updateStats();
+                updateMatrix();
+            }
+
+            // Firebase에서도 불러오기 (있으면 덮어쓰기)
+            if (window.firebase && window.firebaseInitialized) {
+                try {
+                    const studentsRef = window.firebase.ref(window.firebase.database, 'students');
+                    const snapshot = await new Promise((resolve, reject) => {
+                        window.firebase.onValue(studentsRef, resolve, reject, { onlyOnce: true });
+                    });
+
+                    if (snapshot.exists()) {
+                        const firebaseStudents = snapshot.val();
+                        students = firebaseStudents;
+
+                        // localStorage에도 백업 저장
+                        localStorage.setItem('students', JSON.stringify(students));
+
+                        updateStats();
+                        updateMatrix();
+                        console.log('Firebase에서 학생 데이터를 불러왔습니다:', Object.keys(students).length + '명');
+                    }
+                } catch (error) {
+                    console.error('Firebase에서 학생 데이터 불러오기 실패:', error);
+                }
             }
         }
 
         function saveSubjects() {
             localStorage.setItem('subjects', JSON.stringify(subjects));
+            // Firebase에도 동기화
+            syncToFirebase('subjects', subjects);
         }
 
-        function loadSubjects() {
+        async function loadSubjects() {
+            // 먼저 localStorage에서 불러오기
             const saved = localStorage.getItem('subjects');
             if (saved) {
                 subjects = JSON.parse(saved);
                 updateSubjectList();
+            }
+
+            // Firebase에서도 불러오기 (있으면 덮어쓰기)
+            if (window.firebase && window.firebaseInitialized) {
+                try {
+                    const subjectsRef = window.firebase.ref(window.firebase.database, 'subjects');
+                    const snapshot = await new Promise((resolve, reject) => {
+                        window.firebase.onValue(subjectsRef, resolve, reject, { onlyOnce: true });
+                    });
+
+                    if (snapshot.exists()) {
+                        const firebaseSubjects = snapshot.val();
+                        subjects = firebaseSubjects;
+
+                        // localStorage에도 백업 저장
+                        localStorage.setItem('subjects', JSON.stringify(subjects));
+
+                        updateSubjectList();
+                        console.log('Firebase에서 과목 데이터를 불러왔습니다:', Object.keys(subjects).length + '개 과목');
+                    }
+                } catch (error) {
+                    console.error('Firebase에서 과목 데이터 불러오기 실패:', error);
+                }
             }
         }
 
@@ -2990,10 +3129,33 @@
             syncToFirebase('scores', scores);
         }
 
-        function loadScores() {
+        async function loadScores() {
+            // 먼저 localStorage에서 불러오기
             const saved = localStorage.getItem('scores');
             if (saved) {
                 scores = JSON.parse(saved);
+            }
+
+            // Firebase에서도 불러오기 (있으면 덮어쓰기)
+            if (window.firebase && window.firebaseInitialized) {
+                try {
+                    const scoresRef = window.firebase.ref(window.firebase.database, 'scores');
+                    const snapshot = await new Promise((resolve, reject) => {
+                        window.firebase.onValue(scoresRef, resolve, reject, { onlyOnce: true });
+                    });
+
+                    if (snapshot.exists()) {
+                        const firebaseScores = snapshot.val();
+                        scores = firebaseScores;
+
+                        // localStorage에도 백업 저장
+                        localStorage.setItem('scores', JSON.stringify(scores));
+
+                        console.log('Firebase에서 점수 데이터를 불러왔습니다:', Object.keys(scores).length + '개 과목');
+                    }
+                } catch (error) {
+                    console.error('Firebase에서 점수 데이터 불러오기 실패:', error);
+                }
             }
         }
 
@@ -3016,10 +3178,33 @@
             syncToFirebase('studentChecked', studentChecked);
         }
 
-        function loadStudentChecked() {
+        async function loadStudentChecked() {
+            // 먼저 localStorage에서 불러오기
             const saved = localStorage.getItem('studentChecked');
             if (saved) {
                 studentChecked = JSON.parse(saved);
+            }
+
+            // Firebase에서도 불러오기 (있으면 덮어쓰기)
+            if (window.firebase && window.firebaseInitialized) {
+                try {
+                    const checkedRef = window.firebase.ref(window.firebase.database, 'studentChecked');
+                    const snapshot = await new Promise((resolve, reject) => {
+                        window.firebase.onValue(checkedRef, resolve, reject, { onlyOnce: true });
+                    });
+
+                    if (snapshot.exists()) {
+                        const firebaseChecked = snapshot.val();
+                        studentChecked = firebaseChecked;
+
+                        // localStorage에도 백업 저장
+                        localStorage.setItem('studentChecked', JSON.stringify(studentChecked));
+
+                        console.log('Firebase에서 확인 상태 데이터를 불러왔습니다.');
+                    }
+                } catch (error) {
+                    console.error('Firebase에서 확인 상태 데이터 불러오기 실패:', error);
+                }
             }
         }
 
@@ -3120,7 +3305,7 @@
 
         // Firebase에 데이터 동기화
         function syncToFirebase(path, data) {
-            if (!window.firebase || !firebaseInitialized) {
+            if (!window.firebase || !window.firebaseInitialized) {
                 console.log(`Firebase가 초기화되지 않아 ${path} 동기화를 건너뜁니다.`);
                 return;
             }
@@ -3141,7 +3326,7 @@
 
         // Firebase 실시간 리스너 설정
         function setupFirebaseListeners() {
-            if (!window.firebase || !firebaseInitialized) {
+            if (!window.firebase || !window.firebaseInitialized) {
                 console.log('Firebase가 초기화되지 않아 리스너 설정을 건너뜁니다.');
                 return;
             }
@@ -3262,6 +3447,98 @@
             document.getElementById('firebaseSettingsModal').style.display = 'none';
         }
 
+        // QR 코드 모달 열기
+        function openQRModal() {
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+
+            if (!apiKey || !projectId) {
+                alert('먼저 Firebase 설정을 완료해주세요.');
+                openFirebaseSettings();
+                return;
+            }
+
+            // 학생용 페이지 URL 생성
+            const studentUrl = `https://bali-lover.github.io/performance_evaluation/student?apiKey=${encodeURIComponent(apiKey)}&projectId=${encodeURIComponent(projectId)}`;
+
+            // QR 코드 모달 표시
+            const qrModal = document.getElementById('qrModal');
+            const qrContainer = document.getElementById('qr-container');
+            const qrUrlElement = document.getElementById('qr-url');
+
+            // URL 표시
+            qrUrlElement.textContent = studentUrl;
+            qrUrlElement.href = studentUrl;
+
+            // QR 코드 생성
+            generateQRCode(studentUrl);
+
+            qrModal.style.display = 'block';
+        }
+
+        // QR 코드 생성
+        function generateQRCode(url) {
+            const qrContainer = document.getElementById('qr-container');
+            qrContainer.innerHTML = '';
+
+            try {
+                // QR.js API 사용
+                const qrSize = 250;
+                const encodedUrl = encodeURIComponent(url);
+                const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodedUrl}`;
+
+                const qrImg = document.createElement('img');
+                qrImg.src = qrApiUrl;
+                qrImg.style.width = qrSize + 'px';
+                qrImg.style.height = qrSize + 'px';
+                qrImg.style.borderRadius = '8px';
+                qrImg.alt = 'QR Code';
+
+                qrImg.onerror = function() {
+                    // API 실패시 텍스트 링크로 대체
+                    qrContainer.innerHTML = `
+                        <div style="padding: 50px; color: #999;">
+                            <p>QR 코드 생성에 실패했습니다.</p>
+                            <p>직접 링크를 사용하세요.</p>
+                        </div>
+                    `;
+                };
+
+                qrContainer.appendChild(qrImg);
+
+            } catch (error) {
+                console.error('QR 코드 생성 오류:', error);
+                qrContainer.innerHTML = `
+                    <div style="padding: 50px; color: #999;">
+                        <p>QR 코드 생성 중 오류가 발생했습니다.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // QR 코드 모달 닫기
+        function closeQRModal() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        // QR 링크 복사
+        function copyQRLink() {
+            const qrUrl = document.getElementById('qr-url').href;
+
+            navigator.clipboard.writeText(qrUrl).then(() => {
+                alert('링크가 클립보드에 복사되었습니다!');
+            }).catch(() => {
+                // 복사 실패시 선택하여 복사하도록 안내
+                const textArea = document.createElement('textarea');
+                textArea.value = qrUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('링크가 복사되었습니다!');
+            });
+        }
+
         async function testFirebaseConnection() {
             const apiKey = document.getElementById('firebaseApiKey').value.trim();
             const projectId = document.getElementById('firebaseProjectId').value.trim();
@@ -3274,37 +3551,34 @@
             showConnectionStatus('🔍 Firebase 연결을 테스트하는 중...', 'info');
 
             try {
-                // Database URL 생성
+                // 설정 저장
+                localStorage.setItem('firebaseApiKey', apiKey);
+                localStorage.setItem('firebaseProjectId', projectId);
+
+                // 나머지 값들 자동 생성
+                const authDomain = `${projectId}.firebaseapp.com`;
                 const databaseURL = `https://${projectId}-default-rtdb.asia-southeast1.firebasedatabase.app/`;
+                const storageBucket = `${projectId}.appspot.com`;
 
-                // 간단한 테스트 요청
-                const testUrl = `${databaseURL}.json?auth=${apiKey}`;
+                localStorage.setItem('firebaseAuthDomain', authDomain);
+                localStorage.setItem('userDatabaseURL', databaseURL);
+                localStorage.setItem('firebaseStorageBucket', storageBucket);
 
-                const response = await fetch(testUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                // Firebase 초기화 시도
+                const success = await window.initializeFirebase();
 
-                if (response.ok) {
-                    showConnectionStatus('✅ Firebase 연결 성공!', 'success');
-                    console.log('Firebase 연결 성공:', await response.text());
+                if (success) {
+                    // 간단한 테스트 쓰기/읽기
+                    const testRef = window.firebase.ref(window.firebase.database, 'test');
+                    await window.firebase.set(testRef, { timestamp: Date.now() });
+                    showConnectionStatus('✅ Firebase 연결 및 읽기/쓰기 성공!', 'success');
                 } else {
-                    const errorText = await response.text();
-                    console.error('Firebase 오류:', errorText);
-
-                    if (response.status === 401) {
-                        showConnectionStatus('❌ 인증 오류: API Key를 확인해주세요.', 'error');
-                    } else if (response.status === 404) {
-                        showConnectionStatus('❌ 데이터베이스를 찾을 수 없습니다. Project ID와 지역을 확인해주세요.', 'error');
-                    } else {
-                        showConnectionStatus(`❌ 연결 실패 (${response.status}): ${errorText}`, 'error');
-                    }
+                    throw new Error('Firebase 초기화 실패');
                 }
+
             } catch (error) {
                 console.error('연결 테스트 오류:', error);
-                showConnectionStatus(`❌ 네트워크 오류: ${error.message}`, 'error');
+                showConnectionStatus(`❌ 연결 오류: ${error.message}`, 'error');
             }
         }
 
@@ -3328,7 +3602,7 @@
             }
         }
 
-        function saveUserFirebaseConfig() {
+        async function saveUserFirebaseConfig() {
             const apiKey = document.getElementById('firebaseApiKey').value.trim();
             const projectId = document.getElementById('firebaseProjectId').value.trim();
 
@@ -3356,14 +3630,60 @@
             localStorage.setItem('userDatabaseURL', databaseURL);
             localStorage.setItem('firebaseStorageBucket', storageBucket);
 
-            alert('Firebase 설정이 저장되었습니다.\n\n저장된 설정:\n• API Key: ' + apiKey.substring(0, 20) + '...\n• Project ID: ' + projectId + '\n• 지역: 싱가포르 (asia-southeast1)');
+            // Firebase 초기화 시도
+            try {
+                const success = await window.initializeFirebase();
+                if (success) {
+                    // Firebase 연결 후 기존 데이터 불러오기
+                    await loadStudents();
+                    await loadSubjects();
+                    await loadScores();
+                    await loadStudentChecked();
+                    alert('Firebase 설정이 저장되고 연결되었습니다!\n\n• API Key: ' + apiKey.substring(0, 20) + '...\n• Project ID: ' + projectId + '\n• 지역: 싱가포르 (asia-southeast1)\n\n모든 기존 데이터를 Firebase에서 불러왔습니다.');
+                } else {
+                    alert('Firebase 설정이 저장되었지만 연결에 실패했습니다.\n\n설정을 확인하고 다시 시도해주세요.');
+                }
+            } catch (error) {
+                console.error('Firebase 초기화 오류:', error);
+                alert('Firebase 설정이 저장되었지만 초기화 중 오류가 발생했습니다.');
+            }
+
             closeFirebaseModal();
+        }
+
+        // 학생용 링크 생성
+        function generateStudentLink() {
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+
+            if (!apiKey || !projectId) {
+                alert('먼저 Firebase 설정을 저장해주세요.');
+                return;
+            }
+
+            // 학생용 링크 생성 (URL 파라미터로 Firebase 설정 전달)
+            const baseUrl = 'https://bali-lover.github.io/performance_evaluation/student';
+            const studentUrl = `${baseUrl}?apiKey=${encodeURIComponent(apiKey)}&projectId=${encodeURIComponent(projectId)}`;
+
+            // 클립보드에 복사
+            navigator.clipboard.writeText(studentUrl).then(() => {
+                alert(`학생용 링크가 클립보드에 복사되었습니다!\n\n📋 복사된 링크:\n${studentUrl}\n\n학생들에게 이 링크를 공유하세요.`);
+            }).catch(() => {
+                // 클립보드 복사 실패 시 텍스트로 표시
+                prompt('학생용 링크입니다. 복사해서 학생들에게 공유하세요:', studentUrl);
+            });
         }
 
         // 모달 외부 클릭시 닫기
         document.getElementById('firebaseSettingsModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeFirebaseModal();
+            }
+        });
+
+        document.getElementById('qrModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQRModal();
             }
         });
 
