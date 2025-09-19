@@ -241,9 +241,10 @@
                     scoresSection.style.display = 'block';
                 }
 
-                // 과목과 점수 데이터 불러오기
+                // 과목, 점수, 발행 상태 데이터 불러오기
                 const subjectsRef = ref(database, 'subjects');
                 const scoresRef = ref(database, 'scores');
+                const publishedRef = ref(database, 'publishedSubjects');
 
                 Promise.all([
                     new Promise((resolve) => {
@@ -255,9 +256,14 @@
                         onValue(scoresRef, (snapshot) => {
                             resolve(snapshot.val() || {});
                         }, { onlyOnce: true });
+                    }),
+                    new Promise((resolve) => {
+                        onValue(publishedRef, (snapshot) => {
+                            resolve(snapshot.val() || {});
+                        }, { onlyOnce: true });
                     })
-                ]).then(([subjects, scores]) => {
-                    displayStudentScores(studentNumber, studentName, subjects, scores);
+                ]).then(([subjects, scores, publishedSubjects]) => {
+                    displayStudentScores(studentNumber, studentName, subjects, scores, publishedSubjects);
                 });
 
             } catch (error) {
@@ -267,7 +273,7 @@
         }
 
         // 점수 표시
-        function displayStudentScores(studentNumber, studentName, subjects, scores) {
+        function displayStudentScores(studentNumber, studentName, subjects, scores, publishedSubjects) {
             const scoresContent = document.getElementById('scoresContent');
             if (!scoresContent) {
                 console.error('scoresContent 요소를 찾을 수 없습니다.');
@@ -282,6 +288,13 @@
             // 각 과목별 점수 표시
             for (const subjectKey in subjects) {
                 const subject = subjects[subjectKey];
+
+                // 발행 상태 확인 - 기본값은 true, 명시적으로 false인 경우만 숨김
+                const isPublished = publishedSubjects[subjectKey] !== false;
+                if (!isPublished) {
+                    continue; // 허용되지 않은 과목은 표시하지 않음
+                }
+
                 const subjectScores = scores[subjectKey];
                 const studentScore = subjectScores && subjectScores[studentNumber];
 
@@ -361,7 +374,7 @@
 
             // 확인 상태 불러오기
             setTimeout(() => {
-                loadConfirmationStatus(studentNumber, subjects, scores);
+                loadConfirmationStatus(studentNumber, subjects, scores, publishedSubjects);
             }, 100);
         }
 
@@ -390,20 +403,30 @@
 
         // 문의 모달 열기
         function openQuestionModal(subjectKey, areaName, studentNumber) {
+            if (!database) {
+                alert('Firebase 연결이 되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
             const question = prompt(`${areaName} 점수에 대한 문의사항을 입력하세요:`);
 
             if (question && question.trim()) {
-                const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
-                // 교사용 시스템과 호환되도록 문자열로 저장
-                set(questionRef, question.trim());
+                try {
+                    const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
+                    // 교사용 시스템과 호환되도록 문자열로 저장
+                    set(questionRef, question.trim());
 
-                alert('문의사항이 등록되었습니다.');
-                console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question.trim()}`);
+                    alert('문의사항이 등록되었습니다.');
+                    console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question.trim()}`);
+                } catch (error) {
+                    console.error('문의사항 등록 오류:', error);
+                    alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
+                }
             }
         }
 
         // 확인 상태 불러오기
-        function loadConfirmationStatus(studentNumber, subjects, scores) {
+        function loadConfirmationStatus(studentNumber, subjects, scores, publishedSubjects) {
             if (!database) return;
 
             const confirmationRef = ref(database, `studentChecked`);
@@ -413,6 +436,13 @@
                 // 각 과목별로 확인 상태 설정
                 for (const subjectKey in subjects) {
                     const subject = subjects[subjectKey];
+
+                    // 발행 상태 확인 - 허용되지 않은 과목은 스킵
+                    const isPublished = publishedSubjects[subjectKey] !== false;
+                    if (!isPublished) {
+                        continue;
+                    }
+
                     const subjectConfirmations = confirmations[subjectKey] && confirmations[subjectKey][studentNumber];
 
                     if (subject.areas && subject.areas.length > 0) {
