@@ -669,13 +669,16 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
-            padding: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .modal-content {
             background-color: white;
-            margin: 50px auto;
+            margin: 0;
             padding: 0;
             border-radius: 12px;
             width: 90%;
@@ -685,6 +688,8 @@
             position: relative;
             box-sizing: border-box;
             overflow: hidden;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-header {
@@ -807,14 +812,15 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 2000;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            box-sizing: border-box;
         }
 
         .modal {
@@ -825,6 +831,8 @@
             width: 100%;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
+            position: relative;
+            z-index: 10000;
         }
 
         .modal-title {
@@ -1173,96 +1181,90 @@
     </div>
 
     <!-- 학생 정보 수정 모달 -->
-    <div id="studentModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4>👤 학생 정보 관리</h4>
-                <p id="modalStudentInfo" class="student-info-text"></p>
+    <!-- 학생 정보 모달 -->
+    <div id="studentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin: 0 0 20px 0; color: #007bff;">👤 학생 정보 관리</h3>
+            <p id="modalStudentInfo" style="margin: 0 0 20px 0; font-size: 14px; color: #666;"></p>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">학생 이름:</label>
+                <input type="text" id="modalStudentName" placeholder="학생 이름"
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;"
+                       title="학생의 이름을 수정하세요" aria-label="학생 이름 수정">
             </div>
 
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">학생 이름:</label>
-                    <input type="text" id="modalStudentName" placeholder="학생 이름" class="form-input"
-                           title="학생의 이름을 수정하세요"
-                           aria-label="학생 이름 수정">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">현재 비밀번호:</label>
-                    <div class="password-input-group">
-                        <input type="password" id="modalStudentPassword" readonly class="form-input password-field"
-                               title="학생의 현재 비밀번호입니다"
-                               aria-label="학생 현재 비밀번호">
-                        <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="password-toggle-btn"
-                                title="비밀번호 표시/숨기기 전환"
-                                aria-label="비밀번호 표시 전환 버튼">👁️</button>
-                    </div>
-                </div>
-
-                <div class="info-box">
-                    <strong>💡 비밀번호 관리:</strong><br>
-                    • 학생이 비밀번호를 잊었을 때 확인용<br>
-                    • 초기화 버튼으로 비밀번호를 0123으로 재설정<br>
-                    • 학생은 다음 로그인 시 새 비밀번호 설정 필요
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">현재 비밀번호:</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="password" id="modalStudentPassword" readonly
+                           style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa;"
+                           title="학생의 현재 비밀번호입니다" aria-label="학생 현재 비밀번호">
+                    <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()"
+                            style="padding: 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;"
+                            title="비밀번호 표시/숨기기 전환" aria-label="비밀번호 표시 전환 버튼">👁️</button>
                 </div>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn" onclick="updateStudent()">저장</button>
-                <button class="btn warning" onclick="resetPassword()">초기화</button>
-                <button class="btn danger" onclick="deleteStudent()">삭제</button>
-                <button class="btn secondary" onclick="closeModal()">닫기</button>
+            <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 15px; margin-bottom: 20px; font-size: 14px;">
+                <strong>💡 비밀번호 관리:</strong><br>
+                • 학생이 비밀번호를 잊었을 때 확인용<br>
+                • 초기화 버튼으로 비밀번호를 0123으로 재설정<br>
+                • 학생은 다음 로그인 시 새 비밀번호 설정 필요
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="updateStudent()" style="padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">저장</button>
+                <button onclick="resetPassword()" style="padding: 10px 20px; border: none; background: #ffc107; color: black; border-radius: 4px; cursor: pointer;">초기화</button>
+                <button onclick="deleteStudent()" style="padding: 10px 20px; border: none; background: #dc3545; color: white; border-radius: 4px; cursor: pointer;">삭제</button>
+                <button onclick="closeModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">닫기</button>
             </div>
         </div>
     </div>
 
     <!-- 수행영역 자동 추가 모달 -->
-    <div id="autoAreaModal" class="modal">
-        <div class="modal-content" style="width: 500px;">
-            <h4>🎯 수행영역 자동 추가</h4>
+    <div id="autoAreaModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin: 0 0 20px 0; color: #007bff;">🎯 수행영역 자동 추가</h3>
             <div id="autoAreaInfo">
                 <!-- 동적으로 생성되는 과목 정보 -->
             </div>
 
             <div style="text-align: center; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
-                <button class="btn success" onclick="confirmAutoAreaAddition()" id="confirmAutoBtn">✓ 자동 추가</button>
-                <button class="btn" onclick="addSubjectWithoutAreas()" id="addWithoutAreasBtn">📝 직접 입력</button>
-                <button class="btn" onclick="closeAutoAreaModal()">취소</button>
+                <button onclick="confirmAutoAreaAddition()" id="confirmAutoBtn" style="padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">✓ 자동 추가</button>
+                <button onclick="addSubjectWithoutAreas()" id="addWithoutAreasBtn" style="padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">📝 직접 입력</button>
+                <button onclick="closeAutoAreaModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">취소</button>
             </div>
         </div>
     </div>
 
     <!-- Firebase 설정 모달 -->
-    <div class="modal-overlay" id="firebaseSettingsModal" style="display: none;">
-        <div class="modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3 class="modal-title">⚙️ Firebase 프로젝트 설정</h3>
-                <button class="close-btn" onclick="closeFirebaseModal()">&times;</button>
-            </div>
-            <div class="modal-step">
-                <div class="form-group">
-                    <label class="form-label">📖 설정 방법</label>
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
-                        <p><strong>1.</strong> <a href="https://console.firebase.google.com/" target="_blank" style="color: #3b82f6;">Firebase Console</a>에서 새 프로젝트 생성</p>
-                        <p><strong>2.</strong> Realtime Database 활성화 (테스트 모드)</p>
-                        <p><strong>3.</strong> 프로젝트 설정 → 웹 앱 추가 → 구성 정보 복사</p>
-                        <p><strong>4.</strong> 아래 입력란에 정보 입력 후 저장</p>
-                    </div>
-                </div>
+    <div id="firebaseSettingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; width: 450px; max-width: 90%;">
+            <h3 style="margin: 0 0 20px 0; color: #007bff;">🔧 Firebase 설정</h3>
 
-                <div class="form-group">
-                    <label class="form-label">Database URL</label>
-                    <input type="text" class="form-input" id="userDatabaseURL" placeholder="https://your-project-default-rtdb.firebaseio.com/"
-                           title="Firebase Realtime Database URL을 입력하세요"
-                           aria-label="Firebase Database URL 입력">
-                </div>
-
-                <div id="testResult" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+                <strong>📖 설정 방법:</strong><br>
+                1. <a href="https://console.firebase.google.com/" target="_blank" style="color: #3b82f6;">Firebase Console</a>에서 프로젝트 생성<br>
+                2. Realtime Database 활성화 (Asia Southeast1 - 싱가포르)<br>
+                3. 프로젝트 설정 → 웹 앱 추가 → 구성 정보에서 복사
             </div>
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeFirebaseModal()">취소</button>
-                <button class="btn btn-primary" onclick="saveUserFirebaseConfig()">🔗 연결 및 저장</button>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">API Key:</label>
+                <input type="text" id="firebaseApiKey" placeholder="AIzaSyC..."
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Project ID:</label>
+                <input type="text" id="firebaseProjectId" placeholder="your-project-id"
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeFirebaseModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">취소</button>
+                <button onclick="saveUserFirebaseConfig()" style="padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">💾 저장</button>
             </div>
         </div>
     </div>
@@ -3241,85 +3243,72 @@
 
         // Firebase 설정 모달 관련 함수들
         function openFirebaseSettings() {
-            document.getElementById('firebaseSettingsModal').style.display = 'flex';
-            // 기존 설정이 있다면 불러오기
-            const savedURL = localStorage.getItem('userDatabaseURL');
-            if (savedURL) {
-                document.getElementById('userDatabaseURL').value = savedURL;
-            }
+            const modal = document.getElementById('firebaseSettingsModal');
+
+            // 저장된 설정이 있으면 표시
+            const apiKey = localStorage.getItem('firebaseApiKey');
+            const projectId = localStorage.getItem('firebaseProjectId');
+
+            if (apiKey) document.getElementById('firebaseApiKey').value = apiKey;
+            if (projectId) document.getElementById('firebaseProjectId').value = projectId;
+
+            modal.style.display = 'block';
         }
 
         function closeFirebaseModal() {
             document.getElementById('firebaseSettingsModal').style.display = 'none';
-            document.getElementById('testResult').style.display = 'none';
         }
 
-        async function saveUserFirebaseConfig() {
-            const databaseURL = document.getElementById('userDatabaseURL').value.trim();
+        function saveUserFirebaseConfig() {
+            const apiKey = document.getElementById('firebaseApiKey').value.trim();
+            const projectId = document.getElementById('firebaseProjectId').value.trim();
 
-            if (!databaseURL) {
-                alert('Database URL을 입력해주세요.');
+            // 필수 필드 검증
+            if (!apiKey || !projectId) {
+                alert('API Key와 Project ID는 필수 입력 항목입니다.');
                 return;
             }
 
-            // URL 형식 검증
-            if (!databaseURL.includes('firebaseio.com')) {
-                alert('올바른 Firebase Database URL을 입력해주세요.\n예: https://your-project-default-rtdb.firebaseio.com/');
+            if (!apiKey.startsWith('AIza')) {
+                alert('올바른 Firebase API Key를 입력해주세요. (AIza로 시작)');
                 return;
             }
 
-            // 연결 테스트 표시
-            const testResult = document.getElementById('testResult');
-            testResult.style.display = 'block';
-            testResult.style.backgroundColor = '#fff3cd';
-            testResult.style.color = '#856404';
-            testResult.innerHTML = '🔗 Firebase 연결을 테스트하는 중...';
+            // localStorage에 설정 저장
+            localStorage.setItem('firebaseApiKey', apiKey);
+            localStorage.setItem('firebaseProjectId', projectId);
 
-            showConnectionStatus('🔗 연결 테스트 중...', 'warning');
+            // 나머지 값들은 Project ID를 기반으로 자동 생성
+            const authDomain = `${projectId}.firebaseapp.com`;
+            const databaseURL = `https://${projectId}-default-rtdb.asia-southeast1.firebasedatabase.app/`;
+            const storageBucket = `${projectId}.appspot.com`;
 
-            try {
-                // Firebase 초기화 시도
-                const success = await initializeFirebase(databaseURL);
+            localStorage.setItem('firebaseAuthDomain', authDomain);
+            localStorage.setItem('userDatabaseURL', databaseURL);
+            localStorage.setItem('firebaseStorageBucket', storageBucket);
 
-                if (success) {
-                    // 설정 저장
-                    localStorage.setItem('userDatabaseURL', databaseURL);
-
-                    // 연결 성공
-                    testResult.style.backgroundColor = '#d4edda';
-                    testResult.style.color = '#155724';
-                    testResult.innerHTML = '✅ Firebase 연결 성공!';
-
-                    showConnectionStatus('🟢 Firebase 연결됨', 'success');
-
-                    // 리스너 설정
-                    setupFirebaseListeners();
-
-                    setTimeout(() => {
-                        alert('Firebase 설정이 저장되고 연결되었습니다!');
-                        closeFirebaseModal();
-                    }, 1500);
-
-                } else {
-                    // 연결 실패
-                    testResult.style.backgroundColor = '#f8d7da';
-                    testResult.style.color = '#721c24';
-                    testResult.innerHTML = '❌ Firebase 연결 실패. URL을 확인해주세요.';
-
-                    showConnectionStatus('❌ Firebase 연결 실패', 'error');
-                    alert('Firebase 연결에 실패했습니다.\n\n• Database URL이 올바른지 확인해주세요\n• Realtime Database가 활성화되어 있는지 확인해주세요\n• 보안 규칙이 올바르게 설정되어 있는지 확인해주세요');
-                }
-
-            } catch (error) {
-                console.error('Firebase 설정 오류:', error);
-                testResult.style.backgroundColor = '#f8d7da';
-                testResult.style.color = '#721c24';
-                testResult.innerHTML = `❌ 오류: ${error.message}`;
-
-                showConnectionStatus('❌ Firebase 연결 오류', 'error');
-                alert(`Firebase 연결 중 오류가 발생했습니다:\n${error.message}`);
-            }
+            alert('Firebase 설정이 저장되었습니다.\n\n저장된 설정:\n• API Key: ' + apiKey.substring(0, 20) + '...\n• Project ID: ' + projectId + '\n• 지역: 싱가포르 (asia-southeast1)');
+            closeFirebaseModal();
         }
+
+        // 모달 외부 클릭시 닫기
+        document.getElementById('firebaseSettingsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeFirebaseModal();
+            }
+        });
+
+        document.getElementById('studentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('autoAreaModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAutoAreaModal();
+            }
+        });
 
         // Firebase 리스너 정리 (페이지 언로드 시)
         window.addEventListener('beforeunload', () => {
