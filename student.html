@@ -4,7 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.firebasedatabase.app https://*.firebaseapp.com https://*.googleapis.com; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' https: wss: https://*.firebasedatabase.app https://*.firebaseapp.com https://*.googleapis.com;">
-    <title>📚 학생 점수 조회 v1</title>
+    <title>📚 학생 점수 조회 v2 - Firebase 연결 테스트</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+
+        .config-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -13,356 +51,146 @@
 
         let app = null;
         let database = null;
-        let firebaseInitialized = false;
+
+        // 상태 메시지 표시
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
 
         // URL 파라미터에서 Firebase 설정 읽기
-        function loadFirebaseConfig() {
+        function getFirebaseConfigFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const apiKey = urlParams.get('apiKey');
             const projectId = urlParams.get('projectId');
 
             if (apiKey && projectId) {
-                // 이전 설정 완전 삭제
-                localStorage.removeItem('firebaseConfig');
-
-                const config = {
+                return {
                     apiKey: apiKey,
                     authDomain: `${projectId}.firebaseapp.com`,
                     databaseURL: `https://${projectId}-default-rtdb.asia-southeast1.firebasedatabase.app/`,
                     projectId: projectId,
                     storageBucket: `${projectId}.appspot.com`
                 };
-
-                // 새 설정 저장
-                localStorage.setItem('firebaseConfig', JSON.stringify(config));
-                console.log('Firebase 설정 업데이트:', config);
-                return config;
-            } else {
-                // URL 파라미터가 없으면 localStorage도 완전 삭제
-                localStorage.removeItem('firebaseConfig');
-                console.warn('Firebase 설정 파라미터가 없습니다. 올바른 링크를 사용하세요.');
-                return null;
             }
+            return null;
         }
 
-        // Firebase 초기화
-        function initializeFirebase() {
+        // Firebase 초기화 및 연결 테스트
+        async function testFirebaseConnection() {
             try {
-                const config = loadFirebaseConfig();
+                showStatus('🔄 Firebase 연결 시도 중...', 'info');
+
+                // URL 파라미터 확인
+                const config = getFirebaseConfigFromURL();
                 if (!config) {
-                    showMessage('⚠️ Firebase 설정이 없습니다. 선생님이 제공한 링크를 사용하세요.', 'warning');
+                    showStatus('❌ URL 파라미터에 apiKey 또는 projectId가 없습니다.', 'error');
                     return false;
                 }
 
+                // 설정 정보 표시
+                document.getElementById('config').innerHTML =
+                    `<strong>Firebase 설정:</strong><br>
+                     API Key: ${config.apiKey}<br>
+                     Project ID: ${config.projectId}<br>
+                     Database URL: ${config.databaseURL}`;
+
+                // Firebase 앱 초기화
                 app = initializeApp(config);
                 database = getDatabase(app);
-                firebaseInitialized = true;
 
-                console.log('Firebase 초기화 성공:', config.projectId);
-                showMessage('✅ Firebase 연결 성공!', 'success');
+                showStatus('✅ Firebase 초기화 성공!', 'success');
 
-                // 전역 변수로 설정
-                window.firebase = { database, ref, onValue };
+                // 연결 테스트
+                const testRef = ref(database, '.info/connected');
+                onValue(testRef, (snapshot) => {
+                    if (snapshot.val() === true) {
+                        showStatus('🎉 Firebase 데이터베이스 연결 성공!', 'success');
+                        // 연결 성공시 로그인 폼 표시
+                        document.getElementById('loginSection').style.display = 'block';
+                    } else {
+                        showStatus('⚠️ Firebase 데이터베이스 연결이 끊어짐', 'warning');
+                    }
+                });
+
                 return true;
+
             } catch (error) {
-                console.error('Firebase 초기화 실패:', error);
-                showMessage('❌ Firebase 연결 실패: ' + error.message, 'error');
+                console.error('Firebase 오류:', error);
+                showStatus(`❌ Firebase 연결 실패: ${error.message}`, 'error');
                 return false;
             }
         }
 
-        // 메시지 표시
-        function showMessage(message, type = 'info') {
-            const messageDiv = document.getElementById('message');
-            if (messageDiv) {
-                messageDiv.textContent = message;
-                messageDiv.className = `message ${type}`;
-                messageDiv.style.display = 'block';
-
-                if (type === 'success') {
-                    setTimeout(() => {
-                        messageDiv.style.display = 'none';
-                    }, 3000);
-                }
-            }
-        }
-
-        // 페이지 로드 시 초기화
-        window.addEventListener('DOMContentLoaded', () => {
-            initializeFirebase();
-        });
-
-        // 전역 함수로 노출
-        window.showMessage = showMessage;
-    </script>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-weight: 500;
-        }
-
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .message.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .login-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-section h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .input-group {
-            margin: 15px 0;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        .input-group input {
-            width: 120px;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            text-align: center;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: transform 0.2s;
-            margin: 10px 5px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-        }
-
-        .result-section {
-            display: none;
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            margin-top: 20px;
-        }
-
-        .score-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid #4CAF50;
-        }
-
-        .score-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .subject-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .score-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-
-        .score-details {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .no-score {
-            text-align: center;
-            color: #999;
-            font-style: italic;
-            padding: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📚 학생 점수 조회</h1>
-            <p>본인의 수행평가 점수를 확인하세요</p>
-        </div>
-
-        <div class="content">
-            <div id="message" class="message"></div>
-
-            <div class="login-section">
-                <h3>🎓 학생 인증</h3>
-                <div class="input-group">
-                    <label for="studentNumber">학번</label>
-                    <input type="number" id="studentNumber" min="1" placeholder="학번 입력">
-                </div>
-                <div class="input-group">
-                    <label for="studentPassword">비밀번호</label>
-                    <input type="password" id="studentPassword" placeholder="비밀번호 입력">
-                </div>
-                <button class="btn" onclick="loginStudent()">📊 점수 확인</button>
-            </div>
-
-            <div id="resultSection" class="result-section">
-                <h3>📋 내 점수 현황</h3>
-                <div id="scoreList"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 학생 로그인 함수
+        // 학생 로그인
         async function loginStudent() {
             const studentNumber = document.getElementById('studentNumber').value;
             const studentPassword = document.getElementById('studentPassword').value;
 
             if (!studentNumber) {
-                showMessage('학번을 입력하세요.', 'warning');
+                showStatus('❌ 학번을 입력하세요.', 'error');
                 return;
             }
 
             if (!studentPassword) {
-                showMessage('비밀번호를 입력하세요.', 'warning');
-                return;
-            }
-
-            if (!window.firebase) {
-                showMessage('Firebase 연결이 필요합니다.', 'error');
+                showStatus('❌ 비밀번호를 입력하세요.', 'error');
                 return;
             }
 
             try {
+                showStatus('🔄 로그인 중...', 'info');
+
                 // 학생 정보 확인
-                const studentsRef = window.firebase.ref(window.firebase.database, 'students');
-                window.firebase.onValue(studentsRef, (snapshot) => {
-                    const students = snapshot.val();
-                    const student = students ? students[studentNumber] : null;
+                const studentsRef = ref(database, `students/${studentNumber}`);
+                onValue(studentsRef, (snapshot) => {
+                    const student = snapshot.val();
 
                     if (!student) {
-                        showMessage('등록되지 않은 학번입니다.', 'error');
+                        showStatus('❌ 등록되지 않은 학번입니다.', 'error');
                         return;
                     }
 
                     if (student.password !== studentPassword) {
-                        showMessage('비밀번호가 틀렸습니다.', 'error');
+                        showStatus('❌ 비밀번호가 틀렸습니다.', 'error');
                         return;
                     }
 
                     // 로그인 성공
-                    showMessage(`환영합니다, ${student.name}님!`, 'success');
+                    showStatus(`✅ 환영합니다, ${student.name}님!`, 'success');
+                    console.log('로그인 성공:', student);
+
+                    // 점수 조회
                     loadStudentScores(studentNumber, student.name);
+
                 }, { onlyOnce: true });
 
             } catch (error) {
                 console.error('로그인 오류:', error);
-                showMessage('로그인 중 오류가 발생했습니다.', 'error');
+                showStatus(`❌ 로그인 중 오류: ${error.message}`, 'error');
             }
         }
 
         // 학생 점수 불러오기
         function loadStudentScores(studentNumber, studentName) {
             try {
-                const subjectsRef = window.firebase.ref(window.firebase.database, 'subjects');
-                const scoresRef = window.firebase.ref(window.firebase.database, 'scores');
+                showStatus('🔄 점수를 불러오는 중...', 'info');
 
-                // 과목 정보와 점수 정보를 함께 불러오기
+                // 점수 섹션 표시
+                document.getElementById('scoresSection').style.display = 'block';
+
+                // 과목과 점수 데이터 불러오기
+                const subjectsRef = ref(database, 'subjects');
+                const scoresRef = ref(database, 'scores');
+
                 Promise.all([
                     new Promise((resolve) => {
-                        window.firebase.onValue(subjectsRef, (snapshot) => {
+                        onValue(subjectsRef, (snapshot) => {
                             resolve(snapshot.val() || {});
                         }, { onlyOnce: true });
                     }),
                     new Promise((resolve) => {
-                        window.firebase.onValue(scoresRef, (snapshot) => {
+                        onValue(scoresRef, (snapshot) => {
                             resolve(snapshot.val() || {});
                         }, { onlyOnce: true });
                     })
@@ -372,63 +200,170 @@
 
             } catch (error) {
                 console.error('점수 로딩 오류:', error);
-                showMessage('점수를 불러오는 중 오류가 발생했습니다.', 'error');
+                showStatus(`❌ 점수 로딩 실패: ${error.message}`, 'error');
             }
         }
 
         // 점수 표시
         function displayStudentScores(studentNumber, studentName, subjects, scores) {
-            const resultSection = document.getElementById('resultSection');
-            const scoreList = document.getElementById('scoreList');
+            const scoresContent = document.getElementById('scoresContent');
 
             let hasScores = false;
-            let scoreHTML = `<div class="score-card">
-                <div class="score-header">
-                    <span class="subject-name">👤 ${studentName} (${studentNumber}번)</span>
-                </div>
-            </div>`;
+            let html = `<div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
+                           <strong>👤 ${studentName} (${studentNumber}번)</strong>
+                       </div>`;
 
             // 각 과목별 점수 표시
-            for (const subjectId in subjects) {
-                const subject = subjects[subjectId];
-                const studentScore = scores[subjectId] && scores[subjectId][studentNumber];
+            for (const subjectKey in subjects) {
+                const subject = subjects[subjectKey];
+                const subjectScores = scores[subjectKey];
+                const studentScore = subjectScores && subjectScores[studentNumber];
 
-                scoreHTML += `<div class="score-card">
-                    <div class="score-header">
-                        <span class="subject-name">${subject.name}</span>
-                        <span class="score-value">
-                            ${studentScore ? `${studentScore.score}점` : '미입력'}
-                        </span>
-                    </div>
-                    <div class="score-details">
-                        ${subject.area} | 만점: ${subject.maxScore}점
-                        ${studentScore ? `<br>입력일: ${studentScore.date}` : ''}
-                    </div>
-                </div>`;
+                html += `<div style="margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: white;">
+                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                               <strong style="font-size: 16px;">${subject.name || subjectKey}</strong>
+                               <span style="font-size: 14px; color: #666;">만점: ${subject.maxScore || '미설정'}점</span>
+                           </div>`;
 
-                if (studentScore) hasScores = true;
+                if (subject.areas && subject.areas.length > 0) {
+                    // 영역별 점수 표시
+                    subject.areas.forEach((area, index) => {
+                        const areaScore = studentScore && studentScore[area.name];
+                        const scoreText = areaScore ? `${areaScore}점` : '미입력';
+                        const scoreColor = areaScore ? '#28a745' : '#6c757d';
+
+                        html += `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                                   <span>${area.name}</span>
+                                   <span style="color: ${scoreColor}; font-weight: bold;">${scoreText} / ${area.maxScore}점</span>
+                                 </div>`;
+
+                        if (areaScore) hasScores = true;
+                    });
+                } else {
+                    // 단일 점수 표시
+                    const totalScore = studentScore && studentScore.score;
+                    const scoreText = totalScore ? `${totalScore}점` : '미입력';
+                    const scoreColor = totalScore ? '#28a745' : '#6c757d';
+
+                    html += `<div style="text-align: center; font-size: 18px; color: ${scoreColor}; font-weight: bold;">
+                               ${scoreText}
+                             </div>`;
+
+                    if (totalScore) hasScores = true;
+                }
+
+                html += `</div>`;
             }
 
             if (!hasScores) {
-                scoreHTML += `<div class="no-score">
-                    아직 입력된 점수가 없습니다.<br>
-                    선생님이 점수를 입력할 때까지 기다려주세요.
-                </div>`;
+                html += `<div style="text-align: center; color: #999; font-style: italic; padding: 30px;">
+                           아직 입력된 점수가 없습니다.<br>
+                           선생님이 점수를 입력할 때까지 기다려주세요.
+                         </div>`;
             }
 
-            scoreList.innerHTML = scoreHTML;
-            resultSection.style.display = 'block';
-
-            // 결과 섹션으로 스크롤
-            resultSection.scrollIntoView({ behavior: 'smooth' });
+            scoresContent.innerHTML = html;
+            showStatus(`✅ 점수 조회 완료!`, 'success');
         }
 
-        // Enter 키 처리
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                loginStudent();
+        // Firebase 데이터 구조 디버그
+        function debugFirebaseData() {
+            if (!database) {
+                showStatus('❌ Firebase가 연결되지 않았습니다.', 'error');
+                return;
             }
+
+            showStatus('🔍 Firebase 데이터 구조를 확인하는 중...', 'info');
+
+            // 전체 데이터 구조 확인
+            const rootRef = ref(database, '/');
+            onValue(rootRef, (snapshot) => {
+                const data = snapshot.val();
+                console.log('=== Firebase 전체 데이터 ===');
+                console.log(data);
+
+                let debugHtml = '<h4>🔍 Firebase 데이터 구조</h4>';
+                debugHtml += '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">';
+                debugHtml += JSON.stringify(data, null, 2);
+                debugHtml += '</pre>';
+
+                // 기존 점수 표시 영역에 디버그 정보 표시
+                const scoresSection = document.getElementById('scoresSection');
+                scoresSection.style.display = 'block';
+                document.getElementById('scoresContent').innerHTML = debugHtml;
+
+                showStatus('✅ 데이터 구조 확인 완료! 콘솔과 화면을 확인하세요.', 'success');
+            }, { onlyOnce: true });
+        }
+
+        // 전역 함수로 노출
+        window.loginStudent = loginStudent;
+        window.debugFirebaseData = debugFirebaseData;
+
+        // 페이지 로드 시 실행
+        window.addEventListener('DOMContentLoaded', () => {
+            testFirebaseConnection();
         });
+
     </script>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 학생 점수 조회 v2</h1>
+        <h2>Firebase 연결 테스트</h2>
+
+        <div id="status">
+            <div class="status info">🔄 페이지 로딩 중...</div>
+        </div>
+
+        <div id="config" class="config-info">
+            설정 정보를 불러오는 중...
+        </div>
+
+        <!-- 학생 로그인 폼 -->
+        <div id="loginSection" style="display: none; margin-top: 30px;">
+            <hr>
+            <h3>🎓 학생 로그인</h3>
+
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">학번:</label>
+                <input type="number" id="studentNumber" placeholder="학번 입력"
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">비밀번호:</label>
+                <input type="password" id="studentPassword" placeholder="비밀번호 입력"
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+
+            <button onclick="loginStudent()"
+                    style="background: #007bff; color: white; border: none; padding: 12px 24px;
+                           border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-bottom: 10px;">
+                📊 점수 확인
+            </button>
+
+            <button onclick="debugFirebaseData()"
+                    style="background: #28a745; color: white; border: none; padding: 8px 16px;
+                           border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%;">
+                🔍 Firebase 데이터 구조 확인
+            </button>
+        </div>
+
+        <!-- 점수 표시 영역 -->
+        <div id="scoresSection" style="display: none; margin-top: 30px;">
+            <hr>
+            <h3>📊 내 점수</h3>
+            <div id="scoresContent">
+                <div class="status info">점수를 불러오는 중...</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; font-size: 14px; color: #666;">
+            <strong>테스트 방법:</strong><br>
+            URL에 다음과 같이 파라미터를 추가하세요:<br>
+            <code>?apiKey=YOUR_API_KEY&projectId=YOUR_PROJECT_ID</code>
+        </div>
+    </div>
 </body>
 </html>
