@@ -1044,6 +1044,113 @@
                 width: 100%;
             }
         }
+
+        /* 메시지 관련 스타일 */
+        .messages-header {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .messages-filters {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .messages-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+
+        .message-item.answered {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .message-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .message-content {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f1f3f4;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message-reply {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+        }
+
+        .reply-form {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .reply-textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        .reply-buttons {
+            margin-top: 8px;
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-unanswered {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-answered {
+            background: #d4edda;
+            color: #155724;
+        }
     </style>
 </head>
 <body>
@@ -1068,6 +1175,7 @@
             <button class="tab" onclick="switchTab('subjects')">📚 과목/영역설정</button>
             <button class="tab" onclick="switchTab('admin')">🎯 점수관리</button>
             <button class="tab" onclick="switchTab('student')">🎓 학생조회</button>
+            <button class="tab" onclick="switchTab('messages')">💬 학생문의</button>
         </div>
 
         <!-- 학생관리 탭 -->
@@ -1214,6 +1322,32 @@
 
             <div id="studentResult" style="display: none;">
                 <!-- 조회 결과가 여기 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- 학생문의 탭 -->
+        <div id="messages-content" class="tab-content">
+            <div class="messages-header">
+                <h3>💬 학생 문의사항 관리</h3>
+                <p>학생들의 점수 관련 문의를 확인하고 답변하세요</p>
+            </div>
+
+            <div class="messages-filters">
+                <button class="btn btn-primary" onclick="loadStudentQuestions()">🔄 새로고침</button>
+                <select id="messageFilterSubject" onchange="filterMessages()" style="padding: 8px; margin-left: 10px;">
+                    <option value="">전체 과목</option>
+                </select>
+                <select id="messageFilterStatus" onchange="filterMessages()" style="padding: 8px; margin-left: 10px;">
+                    <option value="">전체 상태</option>
+                    <option value="unanswered">미답변</option>
+                    <option value="answered">답변완료</option>
+                </select>
+            </div>
+
+            <div id="messagesContainer" class="messages-container">
+                <div style="text-align: center; color: #999; padding: 40px;">
+                    <p>새로고침 버튼을 클릭하여 문의사항을 불러오세요</p>
+                </div>
             </div>
         </div>
     </div>
@@ -1429,6 +1563,11 @@
 
             if (tab === 'subjects') {
                 updateSubjectSelectors();
+            } else if (tab === 'messages') {
+                // 메시지 탭으로 전환할 때 자동으로 문의사항 불러오기
+                if (window.firebaseInitialized) {
+                    loadStudentQuestions();
+                }
             }
         }
 
@@ -3698,6 +3837,211 @@
                 closeAutoAreaModal();
             }
         });
+
+        // 메시지 관련 전역 변수
+        let allQuestions = {};
+        let allReplies = {};
+        let allStudents = {};
+
+        // 학생 문의사항 불러오기
+        function loadStudentQuestions() {
+            if (!window.firebaseInitialized) {
+                alert('Firebase가 초기화되지 않았습니다.');
+                return;
+            }
+
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">문의사항을 불러오는 중...</div>';
+
+            try {
+                // 학생 문의, 교사 답변, 학생 정보를 모두 불러오기
+                const questionsRef = window.firebase.ref(window.firebase.database, 'studentQuestions');
+                const repliesRef = window.firebase.ref(window.firebase.database, 'teacherReplies');
+                const studentsRef = window.firebase.ref(window.firebase.database, 'students');
+                const subjectsRef = window.firebase.ref(window.firebase.database, 'subjects');
+
+                Promise.all([
+                    new Promise((resolve) => {
+                        window.firebase.onValue(questionsRef, (snapshot) => {
+                            allQuestions = snapshot.val() || {};
+                            resolve();
+                        }, { onlyOnce: true });
+                    }),
+                    new Promise((resolve) => {
+                        window.firebase.onValue(repliesRef, (snapshot) => {
+                            allReplies = snapshot.val() || {};
+                            resolve();
+                        }, { onlyOnce: true });
+                    }),
+                    new Promise((resolve) => {
+                        window.firebase.onValue(studentsRef, (snapshot) => {
+                            allStudents = snapshot.val() || {};
+                            resolve();
+                        }, { onlyOnce: true });
+                    }),
+                    new Promise((resolve) => {
+                        window.firebase.onValue(subjectsRef, (snapshot) => {
+                            const subjects = snapshot.val() || {};
+                            updateMessageFilterOptions(subjects);
+                            resolve();
+                        }, { onlyOnce: true });
+                    })
+                ]).then(() => {
+                    displayStudentQuestions();
+                });
+
+            } catch (error) {
+                console.error('문의사항 로딩 오류:', error);
+                messagesContainer.innerHTML = '<div style="text-align: center; color: #dc3545; padding: 40px;">문의사항을 불러오는 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        // 메시지 필터 옵션 업데이트
+        function updateMessageFilterOptions(subjects) {
+            const subjectFilter = document.getElementById('messageFilterSubject');
+            subjectFilter.innerHTML = '<option value="">전체 과목</option>';
+
+            for (const subjectKey in subjects) {
+                const option = document.createElement('option');
+                option.value = subjectKey;
+                option.textContent = subjects[subjectKey].name || subjectKey;
+                subjectFilter.appendChild(option);
+            }
+        }
+
+        // 학생 문의사항 표시
+        function displayStudentQuestions() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            let questionsArray = [];
+
+            // 문의사항을 배열로 변환
+            for (const subjectKey in allQuestions) {
+                const subjectQuestions = allQuestions[subjectKey];
+                for (const studentNumber in subjectQuestions) {
+                    const studentQuestions = subjectQuestions[studentNumber];
+                    for (const areaName in studentQuestions) {
+                        const question = studentQuestions[areaName];
+                        if (question && question.trim()) {
+                            const reply = allReplies[subjectKey] && allReplies[subjectKey][studentNumber] && allReplies[subjectKey][studentNumber][areaName];
+                            const student = allStudents[studentNumber];
+
+                            questionsArray.push({
+                                subjectKey,
+                                studentNumber,
+                                areaName,
+                                question: question.trim(),
+                                reply: reply ? reply.trim() : null,
+                                studentName: student ? student.name : `학번 ${studentNumber}`,
+                                timestamp: Date.now() // 실제로는 Firebase timestamp를 사용할 수 있음
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (questionsArray.length === 0) {
+                messagesContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">아직 학생 문의가 없습니다.</div>';
+                return;
+            }
+
+            // 최신순으로 정렬
+            questionsArray.sort((a, b) => b.timestamp - a.timestamp);
+
+            let html = '';
+            questionsArray.forEach((item, index) => {
+                const isAnswered = item.reply !== null;
+                const statusClass = isAnswered ? 'answered' : '';
+
+                html += `
+                    <div class="message-item ${statusClass}" data-subject="${item.subjectKey}" data-status="${isAnswered ? 'answered' : 'unanswered'}">
+                        <div class="message-header">
+                            <div>
+                                <strong>${item.studentName}</strong>
+                                <span class="message-info">${item.subjectKey} - ${item.areaName}</span>
+                            </div>
+                            <span class="status-badge status-${isAnswered ? 'answered' : 'unanswered'}">
+                                ${isAnswered ? '답변완료' : '미답변'}
+                            </span>
+                        </div>
+
+                        <div class="message-content">
+                            💬 ${item.question}
+                        </div>
+
+                        ${isAnswered ? `
+                            <div class="message-reply">
+                                <strong>📝 교사 답변:</strong><br>
+                                ${item.reply}
+                            </div>
+                        ` : `
+                            <div class="reply-form">
+                                <textarea class="reply-textarea" placeholder="답변을 입력하세요..." id="reply_${index}"></textarea>
+                                <div class="reply-buttons">
+                                    <button class="btn btn-primary" onclick="sendReply('${item.subjectKey}', '${item.studentNumber}', '${item.areaName}', ${index})">
+                                        📤 답변 보내기
+                                    </button>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+
+            messagesContainer.innerHTML = html;
+        }
+
+        // 답변 보내기
+        function sendReply(subjectKey, studentNumber, areaName, index) {
+            const replyTextarea = document.getElementById(`reply_${index}`);
+            const replyText = replyTextarea.value.trim();
+
+            if (!replyText) {
+                alert('답변을 입력해주세요.');
+                return;
+            }
+
+            if (!window.firebaseInitialized) {
+                alert('Firebase가 초기화되지 않았습니다.');
+                return;
+            }
+
+            try {
+                const replyRef = window.firebase.ref(window.firebase.database, `teacherReplies/${subjectKey}/${studentNumber}/${areaName}`);
+
+                window.firebase.set(replyRef, replyText).then(() => {
+                    alert('답변이 전송되었습니다!');
+                    // 문의사항 다시 불러오기
+                    loadStudentQuestions();
+                }).catch((error) => {
+                    console.error('답변 전송 오류:', error);
+                    alert('답변 전송 중 오류가 발생했습니다: ' + error.message);
+                });
+            } catch (error) {
+                console.error('답변 전송 오류:', error);
+                alert('답변 전송 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 메시지 필터링
+        function filterMessages() {
+            const subjectFilter = document.getElementById('messageFilterSubject').value;
+            const statusFilter = document.getElementById('messageFilterStatus').value;
+            const messageItems = document.querySelectorAll('.message-item');
+
+            messageItems.forEach(item => {
+                const itemSubject = item.getAttribute('data-subject');
+                const itemStatus = item.getAttribute('data-status');
+
+                const subjectMatch = !subjectFilter || itemSubject === subjectFilter;
+                const statusMatch = !statusFilter || itemStatus === statusFilter;
+
+                if (subjectMatch && statusMatch) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
 
         // Firebase 리스너 정리 (페이지 언로드 시)
         window.addEventListener('beforeunload', () => {
