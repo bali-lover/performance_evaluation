@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📚 학생 점수 조회</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <title>수행평가 점수 조회 - 학생용</title>
 
     <style>
         * {
@@ -15,38 +14,51 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background-color: #f5f7fa;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 15px;
         }
 
+        /* 헤더 스타일 */
         .header {
-            background: white;
-            padding: 20px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background-color: white;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .header h1 {
+            margin: 0;
+            font-size: 22px;
             color: #333;
-            font-size: 24px;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .header h1::before {
+            content: "📊";
+            margin-right: 10px;
+            font-size: 26px;
         }
 
         .login-form {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
         }
 
         .login-input {
             padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             font-size: 14px;
             width: 120px;
-            transition: border-color 0.3s;
         }
 
         .login-input:focus {
@@ -54,67 +66,121 @@
             border-color: #007bff;
         }
 
-        .login-btn {
-            background: #007bff;
-            color: white;
+        .btn {
+            padding: 8px 14px;
             border: none;
-            padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            transition: background 0.3s;
+            transition: all 0.2s;
         }
 
-        .login-btn:hover {
-            background: #0056b3;
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .status {
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 8px;
-            font-weight: bold;
+        /* 메인 콘텐츠 스타일 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+            width: 100%;
+            margin: 0;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .card h2 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .card h2::before {
+            margin-right: 8px;
+            font-size: 20px;
+        }
+
+        .student-info h2::before {
+            content: "👤";
+        }
+
+        .score-info h2::before {
+            content: "📈";
+        }
+
+        .placeholder {
+            color: #6c757d;
+            font-style: italic;
             text-align: center;
+            padding: 40px 0;
         }
 
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .warning { background: #fff3cd; color: #856404; }
-        .info { background: #d1ecf1; color: #0c5460; }
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
 
-        .scores-section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-top: 20px;
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .login-form {
+                width: 100%;
+                justify-content: center;
+            }
         }
-
     </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <h1>수행평가 점수 조회</h1>
+        <div class="login-form">
+            <input type="text" id="studentNumber" class="login-input" placeholder="학번">
+            <input type="password" id="studentPassword" class="login-input" placeholder="비밀번호">
+            <button onclick="login()" class="btn btn-primary">로그인</button>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 좌측: 학생 정보 -->
+        <section class="card student-info">
+            <h2>학생 정보</h2>
+            <div id="studentInfoContent" class="placeholder">로그인 후 표시됩니다</div>
+        </section>
+
+        <!-- 우측: 점수 표시 -->
+        <section class="card score-info">
+            <h2>점수 현황</h2>
+            <div id="scoreInfoContent" class="placeholder">로그인 후 표시됩니다</div>
+        </section>
+    </main>
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
 
-        let app = null;
         let database = null;
-
-        // 상태 메시지 표시
-        function showStatus(message, type = 'info') {
-            const statusDiv = document.getElementById('status');
-            if (statusDiv) {
-                statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
-            }
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
+        let firebaseInitialized = false;
 
         // URL 파라미터에서 Firebase 설정 읽기
         function getFirebaseConfigFromURL() {
@@ -134,378 +200,91 @@
             return null;
         }
 
-        // Firebase 초기화 및 연결 테스트
-        async function testFirebaseConnection() {
+        // Firebase 초기화
+        async function initializeFirebase() {
             try {
-                showStatus('🔄 Firebase 연결 시도 중...', 'info');
-
-                // URL 파라미터 확인
                 const config = getFirebaseConfigFromURL();
                 if (!config) {
-                    showStatus('❌ URL 파라미터에 apiKey 또는 projectId가 없습니다.', 'error');
+                    showMessage('❌ URL에 Firebase 설정이 없습니다. 교사에게 올바른 링크를 요청하세요.', 'error');
                     return false;
                 }
 
-                // 설정 정보는 콘솔에만 표시
-                console.log('Firebase 설정:', config);
-
-                // Firebase 앱 초기화
-                app = initializeApp(config);
+                const app = initializeApp(config);
                 database = getDatabase(app);
+                firebaseInitialized = true;
 
-                showStatus('✅ Firebase 초기화 성공!', 'success');
-
-                // 연결 테스트
-                const testRef = ref(database, '.info/connected');
-                onValue(testRef, (snapshot) => {
-                    if (snapshot.val() === true) {
-                        showStatus('🎉 Firebase 데이터베이스 연결 성공! 상단에서 로그인하세요.', 'success');
-                    } else {
-                        showStatus('⚠️ Firebase 데이터베이스 연결이 끊어짐', 'warning');
-                    }
-                });
-
+                showMessage('✅ Firebase 연결 성공!', 'success');
                 return true;
-
             } catch (error) {
-                console.error('Firebase 오류:', error);
-                showStatus(`❌ Firebase 연결 실패: ${error.message}`, 'error');
+                console.error('Firebase 초기화 오류:', error);
+                showMessage('❌ Firebase 연결 실패: ' + error.message, 'error');
                 return false;
             }
         }
 
-        // 학생 로그인
-        async function loginStudent() {
-            const studentNumberEl = document.getElementById('studentNumber');
-            const studentPasswordEl = document.getElementById('studentPassword');
+        // 메시지 표시 함수
+        function showMessage(message, type = 'info') {
+            // 임시로 alert 사용, 나중에 예쁜 알림으로 교체
+            console.log(`[${type}] ${message}`);
+        }
 
-            if (!studentNumberEl || !studentPasswordEl) {
-                console.error('로그인 폼 요소를 찾을 수 없습니다.');
+        // 로그인 함수
+        async function login() {
+            const studentNumber = document.getElementById('studentNumber').value.trim();
+            const studentPassword = document.getElementById('studentPassword').value.trim();
+
+            if (!studentNumber || !studentPassword) {
+                showMessage('학번과 비밀번호를 입력해주세요.', 'error');
                 return;
             }
 
-            const studentNumber = studentNumberEl.value;
-            const studentPassword = studentPasswordEl.value;
-
-            if (!studentNumber) {
-                showStatus('❌ 학번을 입력하세요.', 'error');
-                return;
-            }
-
-            if (!studentPassword) {
-                showStatus('❌ 비밀번호를 입력하세요.', 'error');
+            if (!firebaseInitialized) {
+                showMessage('Firebase가 초기화되지 않았습니다.', 'error');
                 return;
             }
 
             try {
-                showStatus('🔄 로그인 중...', 'info');
+                showMessage('로그인 중...', 'info');
 
-                // 학생 정보 확인
-                const studentsRef = ref(database, `students/${studentNumber}`);
-                onValue(studentsRef, (snapshot) => {
-                    const student = snapshot.val();
+                // Firebase에서 학생 정보 확인
+                const studentRef = ref(database, `students/${studentNumber}`);
+                onValue(studentRef, (snapshot) => {
+                    const studentData = snapshot.val();
 
-                    if (!student) {
-                        showStatus('❌ 등록되지 않은 학번입니다.', 'error');
+                    if (!studentData) {
+                        showMessage('등록되지 않은 학번입니다.', 'error');
                         return;
                     }
 
-                    if (student.password !== studentPassword) {
-                        showStatus('❌ 비밀번호가 틀렸습니다.', 'error');
+                    if (studentData.password !== studentPassword) {
+                        showMessage('비밀번호가 틀렸습니다.', 'error');
                         return;
                     }
 
                     // 로그인 성공
-                    showStatus(`✅ 환영합니다, ${student.name}님!`, 'success');
-                    console.log('로그인 성공:', student);
-
-                    // 점수 조회
-                    loadStudentScores(studentNumber, student.name);
-
+                    showMessage(`환영합니다, ${studentData.name}님!`, 'success');
+                    loadStudentData(studentNumber, studentData);
                 }, { onlyOnce: true });
 
             } catch (error) {
                 console.error('로그인 오류:', error);
-                showStatus(`❌ 로그인 중 오류: ${error.message}`, 'error');
+                showMessage('로그인 중 오류가 발생했습니다: ' + error.message, 'error');
             }
         }
 
-        // 학생 점수 불러오기
-        function loadStudentScores(studentNumber, studentName) {
-            try {
-                showStatus('🔄 점수를 불러오는 중...', 'info');
-
-                // 점수 섹션 표시
-                const scoresSection = document.getElementById('scoresSection');
-                if (scoresSection) {
-                    scoresSection.style.display = 'block';
-                }
-
-                // 과목, 점수, 발행 상태 데이터 불러오기
-                const subjectsRef = ref(database, 'subjects');
-                const scoresRef = ref(database, 'scores');
-                const publishedRef = ref(database, 'publishedSubjects');
-
-                Promise.all([
-                    new Promise((resolve) => {
-                        onValue(subjectsRef, (snapshot) => {
-                            resolve(snapshot.val() || {});
-                        }, { onlyOnce: true });
-                    }),
-                    new Promise((resolve) => {
-                        onValue(scoresRef, (snapshot) => {
-                            resolve(snapshot.val() || {});
-                        }, { onlyOnce: true });
-                    }),
-                    new Promise((resolve) => {
-                        onValue(publishedRef, (snapshot) => {
-                            resolve(snapshot.val() || {});
-                        }, { onlyOnce: true });
-                    })
-                ]).then(([subjects, scores, publishedSubjects]) => {
-                    displayStudentScores(studentNumber, studentName, subjects, scores, publishedSubjects);
-                });
-
-            } catch (error) {
-                console.error('점수 로딩 오류:', error);
-                showStatus(`❌ 점수 로딩 실패: ${error.message}`, 'error');
-            }
-        }
-
-        // 점수 표시
-        function displayStudentScores(studentNumber, studentName, subjects, scores, publishedSubjects) {
-            const scoresContent = document.getElementById('scoresContent');
-            if (!scoresContent) {
-                console.error('scoresContent 요소를 찾을 수 없습니다.');
-                return;
-            }
-
-            let hasScores = false;
-            let html = `<div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 5px;">
-                           <strong>👤 ${studentName} (${studentNumber}번)</strong>
-                       </div>`;
-
-            // 각 과목별 점수 표시
-            for (const subjectKey in subjects) {
-                const subject = subjects[subjectKey];
-
-                // 발행 상태 확인 - 기본값은 true, 명시적으로 false인 경우만 숨김
-                const isPublished = publishedSubjects[subjectKey] !== false;
-                if (!isPublished) {
-                    continue; // 허용되지 않은 과목은 표시하지 않음
-                }
-
-                const subjectScores = scores[subjectKey];
-                const studentScore = subjectScores && subjectScores[studentNumber];
-
-                html += `<div style="margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: white;">
-                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                               <strong style="font-size: 16px;">${subject.name || subjectKey}</strong>
-                               <span style="font-size: 14px; color: #666;">만점: ${subject.maxScore || '미설정'}점</span>
-                           </div>`;
-
-                if (subject.areas && subject.areas.length > 0) {
-                    // 영역별 점수 표시
-                    subject.areas.forEach((area, index) => {
-                        const areaScore = studentScore && studentScore[area.name];
-                        const scoreText = areaScore ? `${areaScore}점` : '미입력';
-                        const scoreColor = areaScore ? '#28a745' : '#6c757d';
-
-                        html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
-                                   <span>${area.name}</span>
-                                   <div style="display: flex; align-items: center; gap: 15px;">
-                                       <span style="color: ${scoreColor}; font-weight: bold;">${scoreText} / ${area.maxScore}점</span>
-                                       ${areaScore ? `
-                                           <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666;">
-                                               <input type="checkbox" onchange="toggleConfirmation('${subjectKey}', '${studentNumber}', '${area.name}')"
-                                                      id="confirm_${subjectKey}_${area.name}" style="margin: 0;">
-                                               확인
-                                           </label>
-                                           <button onclick="openQuestionModal('${subjectKey}', '${area.name}', '${studentNumber}')"
-                                                   style="background: #ffc107; border: none; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">
-                                               문의
-                                           </button>
-                                       ` : ''}
-                                   </div>
-                                 </div>`;
-
-                        if (areaScore) hasScores = true;
-                    });
-                } else {
-                    // 단일 점수 표시
-                    const totalScore = studentScore && studentScore.score;
-                    const scoreText = totalScore ? `${totalScore}점` : '미입력';
-                    const scoreColor = totalScore ? '#28a745' : '#6c757d';
-
-                    html += `<div style="text-align: center;">
-                               <div style="font-size: 18px; color: ${scoreColor}; font-weight: bold; margin-bottom: 10px;">
-                                   ${scoreText}
-                               </div>
-                               ${totalScore ? `
-                                   <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
-                                       <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666;">
-                                           <input type="checkbox" onchange="toggleConfirmation('${subjectKey}', '${studentNumber}', 'total')"
-                                                  id="confirm_${subjectKey}_total" style="margin: 0;">
-                                           확인
-                                       </label>
-                                       <button onclick="openQuestionModal('${subjectKey}', 'total', '${studentNumber}')"
-                                               style="background: #ffc107; border: none; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
-                                           문의
-                                       </button>
-                                   </div>
-                               ` : ''}
-                             </div>`;
-
-                    if (totalScore) hasScores = true;
-                }
-
-                html += `</div>`;
-            }
-
-            if (!hasScores) {
-                html += `<div style="text-align: center; color: #999; font-style: italic; padding: 30px;">
-                           아직 입력된 점수가 없습니다.<br>
-                           선생님이 점수를 입력할 때까지 기다려주세요.
-                         </div>`;
-            }
-
-            scoresContent.innerHTML = html;
-            showStatus(`✅ 점수 조회 완료!`, 'success');
-
-            // 확인 상태 불러오기
-            setTimeout(() => {
-                loadConfirmationStatus(studentNumber, subjects, scores, publishedSubjects);
-            }, 100);
-        }
-
-
-        // 확인 체크박스 토글
-        function toggleConfirmation(subjectKey, studentNumber, areaName) {
-            if (!database) return;
-
-            const checkboxId = `confirm_${subjectKey}_${areaName}`;
-            const checkbox = document.getElementById(checkboxId);
-
-            if (checkbox) {
-                const isChecked = checkbox.checked;
-                const confirmationRef = ref(database, `studentChecked/${subjectKey}/${studentNumber}/${areaName}`);
-
-                if (isChecked) {
-                    set(confirmationRef, true);
-                } else {
-                    // 체크 해제시 완전히 삭제
-                    remove(confirmationRef);
-                }
-
-                console.log(`확인 상태 업데이트: ${subjectKey}/${areaName} = ${isChecked}`);
-            }
-        }
-
-        // 문의 모달 열기
-        function openQuestionModal(subjectKey, areaName, studentNumber) {
-            if (!database) {
-                alert('Firebase 연결이 되지 않았습니다. 페이지를 새로고침해주세요.');
-                return;
-            }
-
-            const question = prompt(`${areaName} 점수에 대한 문의사항을 입력하세요:`);
-
-            if (question && question.trim()) {
-                try {
-                    const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
-                    // 교사용 시스템과 호환되도록 문자열로 저장
-                    set(questionRef, question.trim());
-
-                    alert('문의사항이 등록되었습니다.');
-                    console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question.trim()}`);
-                } catch (error) {
-                    console.error('문의사항 등록 오류:', error);
-                    alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
-                }
-            }
-        }
-
-        // 확인 상태 불러오기
-        function loadConfirmationStatus(studentNumber, subjects, scores, publishedSubjects) {
-            if (!database) return;
-
-            const confirmationRef = ref(database, `studentChecked`);
-            onValue(confirmationRef, (snapshot) => {
-                const confirmations = snapshot.val() || {};
-
-                // 각 과목별로 확인 상태 설정
-                for (const subjectKey in subjects) {
-                    const subject = subjects[subjectKey];
-
-                    // 발행 상태 확인 - 허용되지 않은 과목은 스킵
-                    const isPublished = publishedSubjects[subjectKey] !== false;
-                    if (!isPublished) {
-                        continue;
-                    }
-
-                    const subjectConfirmations = confirmations[subjectKey] && confirmations[subjectKey][studentNumber];
-
-                    if (subject.areas && subject.areas.length > 0) {
-                        // 영역별 확인 상태
-                        subject.areas.forEach(area => {
-                            const checkboxId = `confirm_${subjectKey}_${area.name}`;
-                            const checkbox = document.getElementById(checkboxId);
-
-                            if (checkbox && subjectConfirmations && subjectConfirmations[area.name]) {
-                                checkbox.checked = true;
-                            }
-                        });
-                    } else {
-                        // 단일 점수 확인 상태
-                        const checkboxId = `confirm_${subjectKey}_total`;
-                        const checkbox = document.getElementById(checkboxId);
-
-                        if (checkbox && subjectConfirmations && subjectConfirmations.total) {
-                            checkbox.checked = true;
-                        }
-                    }
-                }
-            }, { onlyOnce: true });
+        // 학생 데이터 로드
+        function loadStudentData(studentNumber, studentInfo) {
+            console.log('학생 데이터 로드:', studentNumber, studentInfo);
+            // 다음 단계에서 구현
         }
 
         // 전역 함수로 노출
-        window.loginStudent = loginStudent;
-        window.toggleConfirmation = toggleConfirmation;
-        window.openQuestionModal = openQuestionModal;
+        window.login = login;
 
-        // 페이지 로드 시 실행
+        // 페이지 로드 시 Firebase 초기화
         window.addEventListener('DOMContentLoaded', () => {
-            testFirebaseConnection();
+            initializeFirebase();
         });
-
     </script>
-</head>
-<body>
-    <!-- 헤더 -->
-    <div class="header">
-        <h1>📚 학생 점수 조회</h1>
-        <div class="login-form">
-            <input type="number" id="studentNumber" class="login-input" placeholder="학번" min="1">
-            <input type="password" id="studentPassword" class="login-input" placeholder="비밀번호">
-            <button onclick="loginStudent()" class="login-btn">📊 점수 확인</button>
-        </div>
-    </div>
-
-    <!-- 메인 컨테이너 -->
-    <div class="container">
-        <!-- 상태 메시지 -->
-        <div id="status">
-            <div class="status info">🔄 Firebase 연결 중...</div>
-        </div>
-
-        <!-- 점수 표시 영역 -->
-        <div id="scoresSection" class="scores-section" style="display: none;">
-            <h2 style="margin-bottom: 20px; color: #333;">📊 내 점수</h2>
-            <div id="scoresContent">
-                <div class="status info">점수를 불러오는 중...</div>
-            </div>
-        </div>
-
-    </div>
 </body>
 </html>
