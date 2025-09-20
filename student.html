@@ -436,31 +436,17 @@
                     <p style="color: #666; font-size: 14px;">학번: ${studentNumber}</p>
                 </div>
 
-                <!-- 교사 메시지 영역 -->
-                <div id="teacherMessages" style="margin-bottom: 20px;">
-                    <h4 style="margin-bottom: 10px; color: #333; display: flex; align-items: center;">
-                        💬 선생님 답변
-                    </h4>
-                    <div id="messagesContent" style="max-height: 200px; overflow-y: auto;">
-                        <div style="text-align: center; color: #999; font-style: italic; padding: 20px;">
-                            아직 답변이 없습니다
-                        </div>
-                    </div>
-                </div>
 
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
                     <h4 style="margin-bottom: 10px; color: #333;">📋 기능 안내</h4>
                     <ul style="color: #666; font-size: 13px; line-height: 1.6;">
                         <li>✅ 점수 확인 후 체크박스 클릭</li>
-                        <li>❓ 문의사항이 있으면 문의 버튼 클릭</li>
-                        <li>💬 선생님 답변을 확인하세요</li>
+                        <li>❓ 문의사항이 있으면 문의 체크박스 클릭</li>
                         <li>📊 발행된 과목만 표시됩니다</li>
                     </ul>
                 </div>
             `;
 
-            // 교사 답변 불러오기
-            loadTeacherReplies(studentNumber);
         }
 
         // 학생 점수 불러오기
@@ -546,10 +532,12 @@
                                                       id="confirm_${subjectKey}_${area.name}" style="margin: 0;">
                                                확인
                                            </label>
-                                           <button onclick="openQuestionModal('${subjectKey}', '${area.name}', '${studentNumber}')"
-                                                   style="background: #ffc107; border: none; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">
-                                               문의
-                                           </button>
+                                           <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                               <input type="checkbox" id="question_${subjectKey}_${area.name}"
+                                                      onchange="toggleQuestion('${subjectKey}', '${area.name}', '${studentNumber}')"
+                                                      style="transform: scale(1.1);">
+                                               <span style="font-size: 10px; color: #666;">문의</span>
+                                           </label>
                                        ` : ''}
                                    </div>
                                  </div>`;
@@ -573,10 +561,12 @@
                                                   id="confirm_${subjectKey}_total" style="margin: 0;">
                                            확인
                                        </label>
-                                       <button onclick="openQuestionModal('${subjectKey}', 'total', '${studentNumber}')"
-                                               style="background: #ffc107; border: none; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
-                                           문의
-                                       </button>
+                                       <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                           <input type="checkbox" id="question_${subjectKey}_total"
+                                                  onchange="toggleQuestion('${subjectKey}', 'total', '${studentNumber}')"
+                                                  style="transform: scale(1.1);">
+                                           <span style="font-size: 12px; color: #666;">문의</span>
+                                       </label>
                                    </div>
                                ` : ''}
                              </div>`;
@@ -645,29 +635,57 @@
             }
         }
 
-        // 문의 모달 열기
-        function openQuestionModal(subjectKey, areaName, studentNumber) {
+        // 문의 상태 토글
+        function toggleQuestion(subjectKey, areaName, studentNumber) {
             if (!database) {
                 alert('Firebase 연결이 되지 않았습니다. 페이지를 새로고침해주세요.');
                 return;
             }
 
-            const question = prompt(`${areaName} 점수에 대한 문의사항을 입력하세요:`);
+            const checkbox = document.getElementById(`question_${subjectKey}_${areaName}`);
+            const isChecked = checkbox.checked;
 
-            if (question && question.trim()) {
+            if (isChecked) {
+                // 문의 등록
+                const question = prompt(`${areaName} 점수에 대한 문의사항을 입력하세요:`);
+
+                if (question && question.trim()) {
+                    try {
+                        const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
+                        set(questionRef, question.trim()).then(() => {
+                            alert('문의사항이 등록되었습니다.');
+                            console.log(`문의사항 등록 성공: ${subjectKey}/${areaName} - ${question.trim()}`);
+                        }).catch((error) => {
+                            console.error('문의사항 등록 실패:', error);
+                            alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
+                            // 실패시 체크박스 해제
+                            checkbox.checked = false;
+                        });
+                    } catch (error) {
+                        console.error('문의사항 등록 오류:', error);
+                        alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
+                        // 실패시 체크박스 해제
+                        checkbox.checked = false;
+                    }
+                } else {
+                    // 취소시 체크박스 해제
+                    checkbox.checked = false;
+                }
+            } else {
+                // 문의 해제 - Firebase에서 데이터 삭제
                 try {
                     const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
-                    // 교사용 시스템과 호환되도록 문자열로 저장
-                    set(questionRef, question.trim()).then(() => {
-                        alert('문의사항이 등록되었습니다.');
-                        console.log(`문의사항 등록 성공: ${subjectKey}/${areaName} - ${question.trim()}`);
+                    set(questionRef, null).then(() => {
+                        console.log(`문의사항 삭제 성공: ${subjectKey}/${areaName}`);
                     }).catch((error) => {
-                        console.error('문의사항 등록 실패:', error);
-                        alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
+                        console.error('문의사항 삭제 실패:', error);
+                        // 실패시 체크박스 원상복구
+                        checkbox.checked = true;
                     });
                 } catch (error) {
-                    console.error('문의사항 등록 오류:', error);
-                    alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
+                    console.error('문의사항 삭제 오류:', error);
+                    // 실패시 체크박스 원상복구
+                    checkbox.checked = true;
                 }
             }
         }
@@ -787,72 +805,11 @@
             }
         }
 
-        // 교사 답변 불러오기
-        function loadTeacherReplies(studentNumber) {
-            if (!database) return;
-
-            try {
-                const repliesRef = ref(database, `teacherReplies`);
-                onValue(repliesRef, (snapshot) => {
-                    const allReplies = snapshot.val() || {};
-                    displayTeacherMessages(allReplies, studentNumber);
-                });
-            } catch (error) {
-                console.error('교사 답변 로딩 오류:', error);
-            }
-        }
-
-        // 교사 메시지 표시
-        function displayTeacherMessages(allReplies, studentNumber) {
-            const messagesContent = document.getElementById('messagesContent');
-            if (!messagesContent) return;
-
-            let hasMessages = false;
-            let messagesHtml = '';
-
-            // 해당 학생의 모든 답변 찾기
-            for (const subjectKey in allReplies) {
-                const subjectReplies = allReplies[subjectKey];
-                if (subjectReplies && subjectReplies[studentNumber]) {
-                    const studentReplies = subjectReplies[studentNumber];
-
-                    for (const areaName in studentReplies) {
-                        const reply = studentReplies[areaName];
-                        if (reply && reply.trim()) {
-                            hasMessages = true;
-                            const timestamp = new Date().toLocaleString();
-
-                            messagesHtml += `
-                                <div style="margin-bottom: 10px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 5px; background: white;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                        <strong style="color: #007bff; font-size: 12px;">${subjectKey} - ${areaName}</strong>
-                                        <span style="color: #999; font-size: 10px;">💬</span>
-                                    </div>
-                                    <div style="color: #333; font-size: 13px; line-height: 1.4;">
-                                        ${reply}
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    }
-                }
-            }
-
-            if (!hasMessages) {
-                messagesHtml = `
-                    <div style="text-align: center; color: #999; font-style: italic; padding: 20px;">
-                        아직 답변이 없습니다
-                    </div>
-                `;
-            }
-
-            messagesContent.innerHTML = messagesHtml;
-        }
 
         // 전역 함수로 노출
         window.login = login;
         window.toggleConfirmation = toggleConfirmation;
-        window.openQuestionModal = openQuestionModal;
+        window.toggleQuestion = toggleQuestion;
         window.changePassword = changePassword;
 
         // 페이지 로드 시 Firebase 초기화
