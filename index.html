@@ -1473,6 +1473,7 @@
         let scores = {}; // "학년-과목" 형태: {"3-사회": {학번: {영역명: 점수}}}
         let publishedSubjects = {}; // "학년-과목" 형태: {"3-사회": true/false} - 점수 공개 여부 (UI 표시용)
         let studentChecked = {}; // "학년-과목" 형태: {"3-사회": {학번: {영역명: true/false}}} - 학생 확인 상태
+        let studentQuestions = {}; // "학년-과목" 형태: {"3-사회": {학번: {영역명: true/false}}} - 학생 문의 상태
         let currentGrade = 3;
         let currentEditingStudent = null;
         let currentSubject = '';
@@ -1488,6 +1489,7 @@
             await loadScores();
             loadPublishedSubjects();
             await loadStudentChecked();
+            await loadStudentQuestions();
 
             // 모든 과목의 기본값을 허용으로 설정
             setDefaultPublishStatus();
@@ -1536,6 +1538,7 @@
                     await loadSubjects();
                     await loadScores();
                     await loadStudentChecked();
+                    await loadStudentQuestions();
                 } else {
                     showConnectionStatus('❌ Firebase 연결 실패', 'error');
                 }
@@ -2683,6 +2686,7 @@
                             ${areas.map(area => `<th>${area.name}<br>(${area.maxScore}점)</th>`).join('')}
                             <th>총점</th>
                             <th>확인여부</th>
+                            <th>문의여부</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2711,7 +2715,7 @@
 
                 if (studentChecked[currentScoreSubject] && studentChecked[currentScoreSubject][num]) {
                     subject.areas.forEach(area => {
-                        if (studentChecked[currentScoreSubject][num][area.name]) {
+                        if (studentChecked[currentScoreSubject][num][area.name] === true) {
                             checkedAreas++;
                         }
                     });
@@ -2728,6 +2732,26 @@
                     checkColor = '#ffc107';
                 }
 
+                // 학생의 문의 여부 체크 (영역별)
+                let questionAreas = 0;
+                if (studentQuestions[currentScoreSubject] && studentQuestions[currentScoreSubject][num]) {
+                    subject.areas.forEach(area => {
+                        if (studentQuestions[currentScoreSubject][num][area.name] === true) {
+                            questionAreas++;
+                        }
+                    });
+                }
+
+                let questionStatus = '';
+                let questionColor = '';
+                if (questionAreas > 0) {
+                    questionStatus = `❓ 문의(${questionAreas}개)`;
+                    questionColor = '#dc3545';
+                } else {
+                    questionStatus = `-`;
+                    questionColor = '#6c757d';
+                }
+
                 tableHTML += `<tr><td>${num}</td><td>${student.name}</td>`;
 
                 areas.forEach(area => {
@@ -2736,7 +2760,7 @@
                     tableHTML += `<td>${score}</td>`;
                 });
 
-                tableHTML += `<td><strong>${total}</strong></td><td style="color: ${checkColor}; font-weight: bold;">${checkStatus}</td></tr>`;
+                tableHTML += `<td><strong>${total}</strong></td><td style="color: ${checkColor}; font-weight: bold;">${checkStatus}</td><td style="color: ${questionColor}; font-weight: bold;">${questionStatus}</td></tr>`;
             });
 
             tableHTML += '</tbody></table>';
@@ -3155,6 +3179,36 @@
             }
         }
 
+        async function loadStudentQuestions() {
+            // 먼저 localStorage에서 불러오기
+            const saved = localStorage.getItem('studentQuestions');
+            if (saved) {
+                studentQuestions = JSON.parse(saved);
+            }
+
+            // Firebase에서도 불러오기 (있으면 덮어쓰기)
+            if (window.firebase && window.firebaseInitialized) {
+                try {
+                    const questionsRef = window.firebase.ref(window.firebase.database, 'studentQuestions');
+                    const snapshot = await new Promise((resolve, reject) => {
+                        window.firebase.onValue(questionsRef, resolve, reject, { onlyOnce: true });
+                    });
+
+                    if (snapshot.exists()) {
+                        const firebaseQuestions = snapshot.val();
+                        studentQuestions = firebaseQuestions;
+
+                        // localStorage에도 백업 저장
+                        localStorage.setItem('studentQuestions', JSON.stringify(studentQuestions));
+
+                        console.log('Firebase에서 문의 상태 데이터를 불러왔습니다.');
+                    }
+                } catch (error) {
+                    console.error('Firebase에서 문의 상태 데이터 불러오기 실패:', error);
+                }
+            }
+        }
+
 
 
 
@@ -3273,6 +3327,20 @@
                 if (data) {
                     studentChecked = data;
                     localStorage.setItem('studentChecked', JSON.stringify(studentChecked));
+                    // 현재 점수 관리 탭이 열려있다면 테이블 새로고침
+                    if (currentScoreSubject && document.getElementById('admin-content').classList.contains('active')) {
+                        generateScoreTable();
+                    }
+                }
+            });
+
+            // 학생 문의 상태 리스너
+            const questionsRef = window.firebase.ref(window.firebase.database, 'studentQuestions');
+            firebaseListeners.studentQuestions = window.firebase.onValue(questionsRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    studentQuestions = data;
+                    localStorage.setItem('studentQuestions', JSON.stringify(studentQuestions));
                     // 현재 점수 관리 탭이 열려있다면 테이블 새로고침
                     if (currentScoreSubject && document.getElementById('admin-content').classList.contains('active')) {
                         generateScoreTable();
@@ -3540,6 +3608,7 @@
                     await loadSubjects();
                     await loadScores();
                     await loadStudentChecked();
+                    await loadStudentQuestions();
                     alert('Firebase 설정이 저장되고 연결되었습니다!\n\n• API Key: ' + apiKey.substring(0, 20) + '...\n• Project ID: ' + projectId + '\n• 지역: 싱가포르 (asia-southeast1)\n\n모든 기존 데이터를 Firebase에서 불러왔습니다.');
                 } else {
                     alert('Firebase 설정이 저장되었지만 연결에 실패했습니다.\n\n설정을 확인하고 다시 시도해주세요.');
