@@ -506,7 +506,7 @@
                     <ul style="color: #666; font-size: 13px; line-height: 1.6;">
                         <li>✅ 점수 확인 후 체크박스 클릭</li>
                         <li>❓ 문의사항이 있으면 문의 체크박스 클릭</li>
-                        <li>📊 발행된 과목만 표시됩니다</li>
+                        <li>📊 선생님이 입력된 과목만 표시됩니다</li>
                     </ul>
                 </div>
             `;
@@ -694,58 +694,36 @@
             }
         }
 
-        // 문의 상태 토글
+        // 문의 상태 토글 (단순 체크만)
         function toggleQuestion(subjectKey, areaName, studentNumber) {
             if (!database) {
-                alert('Firebase 연결이 되지 않았습니다. 페이지를 새로고침해주세요.');
+                console.log('Firebase 연결이 되지 않았습니다.');
                 return;
             }
 
             const checkbox = document.getElementById(`question_${subjectKey}_${areaName}`);
             const isChecked = checkbox.checked;
 
-            if (isChecked) {
-                // 문의 등록
-                const question = prompt(`${areaName} 점수에 대한 문의사항을 입력하세요:`);
-
-                if (question && question.trim()) {
-                    try {
-                        const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
-                        set(questionRef, question.trim()).then(() => {
-                            alert('문의사항이 등록되었습니다.');
-                            console.log(`문의사항 등록 성공: ${subjectKey}/${areaName} - ${question.trim()}`);
-                        }).catch((error) => {
-                            console.error('문의사항 등록 실패:', error);
-                            alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
-                            // 실패시 체크박스 해제
-                            checkbox.checked = false;
-                        });
-                    } catch (error) {
-                        console.error('문의사항 등록 오류:', error);
-                        alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
-                        // 실패시 체크박스 해제
-                        checkbox.checked = false;
-                    }
-                } else {
-                    // 취소시 체크박스 해제
-                    checkbox.checked = false;
-                }
-            } else {
-                // 문의 해제 - Firebase에서 데이터 삭제
-                try {
-                    const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
-                    set(questionRef, null).then(() => {
-                        console.log(`문의사항 삭제 성공: ${subjectKey}/${areaName}`);
+            try {
+                // 단순히 문의 상태만 저장 (메시지 없이)
+                const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
+                if (isChecked) {
+                    set(questionRef, true).then(() => {
+                        console.log(`문의 상태 저장: ${subjectKey}/${areaName} = true`);
                     }).catch((error) => {
-                        console.error('문의사항 삭제 실패:', error);
-                        // 실패시 체크박스 원상복구
-                        checkbox.checked = true;
+                        console.error('문의 상태 저장 실패:', error);
+                        checkbox.checked = false;
                     });
-                } catch (error) {
-                    console.error('문의사항 삭제 오류:', error);
-                    // 실패시 체크박스 원상복구
-                    checkbox.checked = true;
+                } else {
+                    set(questionRef, null).then(() => {
+                        console.log(`문의 상태 해제: ${subjectKey}/${areaName}`);
+                    }).catch((error) => {
+                        console.error('문의 상태 해제 실패:', error);
+                    });
                 }
+            } catch (error) {
+                console.error('문의 상태 처리 오류:', error);
+                checkbox.checked = false;
             }
         }
 
