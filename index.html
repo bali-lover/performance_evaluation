@@ -2715,16 +2715,21 @@
 
                 if (studentChecked[currentScoreSubject] && studentChecked[currentScoreSubject][num]) {
                     subject.areas.forEach(area => {
-                        if (studentChecked[currentScoreSubject][num][area.name] === true) {
+                        const areaStatus = studentChecked[currentScoreSubject][num][area.name];
+                        if (areaStatus === true) {
                             checkedAreas++;
                         }
                     });
                 }
 
+
                 let checkStatus = '';
                 let checkColor = '';
 
-                if (checkedAreas === totalAreas) {
+                if (checkedAreas === 0) {
+                    checkStatus = `⭕ 미확인(${checkedAreas}/${totalAreas})`;
+                    checkColor = '#6c757d';
+                } else if (checkedAreas === totalAreas) {
                     checkStatus = `✅ 완료(${checkedAreas}/${totalAreas})`;
                     checkColor = '#28a745';
                 } else {
