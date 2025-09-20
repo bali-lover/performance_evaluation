@@ -570,6 +570,18 @@
                     continue; // 허용되지 않은 과목은 표시하지 않음
                 }
 
+                // 과목키에서 담당 반 정보 확인 (예: "3-사회-교사명-1,2,3")
+                const keyParts = subjectKey.split('-');
+                if (keyParts.length >= 4) {
+                    const assignedClassesStr = keyParts[keyParts.length - 1]; // 마지막 부분이 반 목록
+                    const assignedClasses = assignedClassesStr.split(',').map(c => parseInt(c));
+
+                    // 학생의 반이 담당 반 목록에 포함되어 있는지 확인
+                    if (!assignedClasses.includes(parseInt(studentData.class))) {
+                        continue; // 학생이 속한 반이 담당 반이 아니면 표시하지 않음
+                    }
+                }
+
                 const subjectScores = scores[subjectKey];
                 const studentScore = subjectScores && subjectScores[studentNumber];
 
@@ -743,6 +755,19 @@
                     const isPublished = publishedSubjects[subjectKey] !== false;
                     if (!isPublished) {
                         continue;
+                    }
+
+                    // 과목키에서 담당 반 정보 확인
+                    const keyParts = subjectKey.split('-');
+                    if (keyParts.length >= 4) {
+                        const assignedClassesStr = keyParts[keyParts.length - 1];
+                        const assignedClasses = assignedClassesStr.split(',').map(c => parseInt(c));
+
+                        // 학생의 반이 담당 반 목록에 포함되어 있는지 확인
+                        const studentClass = parseInt(students[studentNumber]?.class);
+                        if (!assignedClasses.includes(studentClass)) {
+                            continue; // 학생이 속한 반이 담당 반이 아니면 스킵
+                        }
                     }
 
                     const subjectConfirmations = confirmations[subjectKey] && confirmations[subjectKey][studentNumber];
