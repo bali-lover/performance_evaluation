@@ -677,8 +677,8 @@
                             checkbox.checked = false;
                         });
                     } else {
-                        // 체크 해제시 완전히 삭제
-                        remove(confirmationRef).then(() => {
+                        // 체크 해제시 null로 설정하여 완전히 삭제
+                        set(confirmationRef, null).then(() => {
                             console.log(`확인 상태 삭제 성공: ${subjectKey}/${areaName}`);
                         }).catch((error) => {
                             console.error('확인 상태 삭제 실패:', error);
