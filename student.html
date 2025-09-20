@@ -130,6 +130,37 @@
             padding: 40px 0;
         }
 
+        /* 상태 메시지 스타일 */
+        .status-message {
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .status-success {
+            border-left: 4px solid #28a745;
+            color: #155724;
+            background-color: #d4edda;
+        }
+
+        .status-error {
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+
+        .status-info {
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+            background-color: #d1ecf1;
+        }
+
         /* 반응형 */
         @media (max-width: 768px) {
             .main-content {
@@ -158,6 +189,9 @@
             <button onclick="login()" class="btn btn-primary">로그인</button>
         </div>
     </header>
+
+    <!-- 상태 메시지 -->
+    <div id="statusMessage" style="display: none;"></div>
 
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
@@ -224,8 +258,19 @@
 
         // 메시지 표시 함수
         function showMessage(message, type = 'info') {
-            // 임시로 alert 사용, 나중에 예쁜 알림으로 교체
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+
             console.log(`[${type}] ${message}`);
+
+            // 성공/정보 메시지는 3초 후 자동 숨김
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
         }
 
         // 로그인 함수
