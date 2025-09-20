@@ -492,7 +492,10 @@
 
         // 확인 체크박스 토글
         function toggleConfirmation(subjectKey, studentNumber, areaName) {
-            if (!database) return;
+            if (!database) {
+                console.error('Firebase 데이터베이스가 초기화되지 않았습니다.');
+                return;
+            }
 
             const checkboxId = `confirm_${subjectKey}_${areaName}`;
             const checkbox = document.getElementById(checkboxId);
@@ -501,14 +504,30 @@
                 const isChecked = checkbox.checked;
                 const confirmationRef = ref(database, `studentChecked/${subjectKey}/${studentNumber}/${areaName}`);
 
-                if (isChecked) {
-                    set(confirmationRef, true);
-                } else {
-                    // 체크 해제시 완전히 삭제
-                    remove(confirmationRef);
+                try {
+                    if (isChecked) {
+                        set(confirmationRef, true).then(() => {
+                            console.log(`확인 상태 저장 성공: ${subjectKey}/${areaName} = true`);
+                        }).catch((error) => {
+                            console.error('확인 상태 저장 실패:', error);
+                            // 실패 시 체크박스 원래 상태로 되돌리기
+                            checkbox.checked = false;
+                        });
+                    } else {
+                        // 체크 해제시 완전히 삭제
+                        remove(confirmationRef).then(() => {
+                            console.log(`확인 상태 삭제 성공: ${subjectKey}/${areaName}`);
+                        }).catch((error) => {
+                            console.error('확인 상태 삭제 실패:', error);
+                            // 실패 시 체크박스 원래 상태로 되돌리기
+                            checkbox.checked = true;
+                        });
+                    }
+                } catch (error) {
+                    console.error('확인 상태 업데이트 오류:', error);
+                    // 실패 시 체크박스 원래 상태로 되돌리기
+                    checkbox.checked = !isChecked;
                 }
-
-                console.log(`확인 상태 업데이트: ${subjectKey}/${areaName} = ${isChecked}`);
             }
         }
 
@@ -525,10 +544,13 @@
                 try {
                     const questionRef = ref(database, `studentQuestions/${subjectKey}/${studentNumber}/${areaName}`);
                     // 교사용 시스템과 호환되도록 문자열로 저장
-                    set(questionRef, question.trim());
-
-                    alert('문의사항이 등록되었습니다.');
-                    console.log(`문의사항 등록: ${subjectKey}/${areaName} - ${question.trim()}`);
+                    set(questionRef, question.trim()).then(() => {
+                        alert('문의사항이 등록되었습니다.');
+                        console.log(`문의사항 등록 성공: ${subjectKey}/${areaName} - ${question.trim()}`);
+                    }).catch((error) => {
+                        console.error('문의사항 등록 실패:', error);
+                        alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
+                    });
                 } catch (error) {
                     console.error('문의사항 등록 오류:', error);
                     alert('문의사항 등록 중 오류가 발생했습니다: ' + error.message);
@@ -581,6 +603,8 @@
 
         // 전역 함수로 노출
         window.login = login;
+        window.toggleConfirmation = toggleConfirmation;
+        window.openQuestionModal = openQuestionModal;
 
         // 페이지 로드 시 Firebase 초기화
         window.addEventListener('DOMContentLoaded', () => {
