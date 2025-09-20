@@ -105,7 +105,7 @@
         .header {
             background-color: white;
             color: #333;
-            padding: 6px 15px;
+            padding: 12px 15px;
             border-radius: 6px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.1);
             margin-bottom: 2px;
@@ -834,12 +834,13 @@
             line-height: 1.5;
         }
 
-        .btn.secondary {
-            background-color: #6c757d;
+        .btn-secondary {
+            background-color: #6c757d !important;
+            color: white !important;
         }
 
-        .btn.secondary:hover {
-            background-color: #545b62;
+        .btn-secondary:hover {
+            background-color: #545b62 !important;
         }
 
         /* Firebase 모달 스타일 */
@@ -1174,8 +1175,6 @@
             <button class="tab active" onclick="switchTab('students')">👥 학생관리</button>
             <button class="tab" onclick="switchTab('subjects')">📚 과목/영역설정</button>
             <button class="tab" onclick="switchTab('admin')">🎯 점수관리</button>
-            <button class="tab" onclick="switchTab('student')">🎓 학생조회</button>
-            <button class="tab" onclick="switchTab('messages')">💬 학생문의</button>
         </div>
 
         <!-- 학생관리 탭 -->
@@ -1242,6 +1241,9 @@
                         <input type="text" class="input-field" id="subjectName" placeholder="과목명 (예: 국어, 수학, 사회)"
                                title="추가할 과목명을 입력하세요"
                                aria-label="과목명 입력">
+                        <input type="text" class="input-field" id="teacherName" placeholder="교사이름 (선택사항)"
+                               title="담당 교사이름을 입력하세요 (선택사항)"
+                               aria-label="교사이름 입력">
                         <button class="btn info" onclick="addSubject()">➕ 과목 추가</button>
                     </div>
                 </div>
@@ -1264,6 +1266,7 @@
                                title="해당 수행영역의 만점을 입력하세요"
                                aria-label="만점 입력">
                         <button class="btn" onclick="addArea()">➕ 영역 추가</button>
+                        <button class="btn success" onclick="generateTemplate()" id="templateBtn" disabled style="margin-left: 10px;">📥 점수표 템플릿 다운로드</button>
                     </div>
 
                     <div id="currentSubjectAreas" class="subject-areas">
@@ -1271,10 +1274,6 @@
                     </div>
                 </div>
 
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn success" onclick="generateTemplate()" id="templateBtn" disabled>📥 점수표 템플릿 다운로드</button>
-                    <button class="btn danger" onclick="clearAllSubjects()">🗑️ 모든 과목 삭제</button>
-                </div>
             </div>
         </div>
 
@@ -1300,56 +1299,11 @@
                     <!-- 동적으로 생성된 점수표가 여기 표시됩니다 -->
                 </div>
 
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn" onclick="saveScores()">💾 점수 저장</button>
-                    <button class="btn danger" onclick="clearScores()">🗑️ 점수 초기화</button>
-                </div>
 
             </div>
         </div>
 
-        <!-- 학생조회 탭 -->
-        <div id="student-content" class="tab-content">
-            <div class="student-login">
-                <h3>🎓 학생 점수 조회</h3>
-                <p>본인의 학번을 입력하세요</p>
-                <input type="text" class="login-input" id="studentLoginNumber" placeholder="학번(30101)"
-                       title="본인의 학번을 입력하세요 (예: 30101)"
-                       aria-label="학생 학번 입력">
-                <br>
-                <button class="btn" onclick="checkScore()">📊 점수 확인</button>
-            </div>
 
-            <div id="studentResult" style="display: none;">
-                <!-- 조회 결과가 여기 표시됩니다 -->
-            </div>
-        </div>
-
-        <!-- 학생문의 탭 -->
-        <div id="messages-content" class="tab-content">
-            <div class="messages-header">
-                <h3>💬 학생 문의사항 관리</h3>
-                <p>학생들의 점수 관련 문의를 확인하고 답변하세요</p>
-            </div>
-
-            <div class="messages-filters">
-                <button class="btn btn-primary" onclick="loadStudentQuestions()">🔄 새로고침</button>
-                <select id="messageFilterSubject" onchange="filterMessages()" style="padding: 8px; margin-left: 10px;">
-                    <option value="">전체 과목</option>
-                </select>
-                <select id="messageFilterStatus" onchange="filterMessages()" style="padding: 8px; margin-left: 10px;">
-                    <option value="">전체 상태</option>
-                    <option value="unanswered">미답변</option>
-                    <option value="answered">답변완료</option>
-                </select>
-            </div>
-
-            <div id="messagesContainer" class="messages-container">
-                <div style="text-align: center; color: #999; padding: 40px;">
-                    <p>새로고침 버튼을 클릭하여 문의사항을 불러오세요</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- 학생 정보 수정 모달 -->
@@ -1381,7 +1335,7 @@
             <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 15px; margin-bottom: 20px; font-size: 14px;">
                 <strong>💡 비밀번호 관리:</strong><br>
                 • 학생이 비밀번호를 잊었을 때 확인용<br>
-                • 초기화 버튼으로 비밀번호를 0123으로 재설정<br>
+                • 초기화 버튼으로 비밀번호를 123456으로 재설정<br>
                 • 학생은 다음 로그인 시 새 비밀번호 설정 필요
             </div>
 
@@ -1390,6 +1344,44 @@
                 <button onclick="resetPassword()" style="padding: 10px 20px; border: none; background: #ffc107; color: black; border-radius: 4px; cursor: pointer;">초기화</button>
                 <button onclick="deleteStudent()" style="padding: 10px 20px; border: none; background: #dc3545; color: white; border-radius: 4px; cursor: pointer;">삭제</button>
                 <button onclick="closeModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 과목 추가 단계별 모달 -->
+    <div id="subjectAddModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+
+            <!-- 1단계: 반 선택 -->
+            <div id="step1ClassSelection">
+                <h3 style="margin: 0 0 20px 0; color: #007bff;">🏫 1단계: 담당 반 선택</h3>
+                <div id="subjectInfoDisplay" style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                    <!-- 과목 정보가 표시됩니다 -->
+                </div>
+                <p style="margin: 0 0 20px 0; color: #666;">담당하실 반을 선택해주세요. (복수 선택 가능)</p>
+
+                <div id="classSelectionContent" style="margin-bottom: 20px;">
+                    <!-- 동적으로 생성되는 체크박스들 -->
+                </div>
+
+                <div style="text-align: center; border-top: 1px solid #ddd; padding-top: 20px;">
+                    <button onclick="goToStep2()" style="padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">다음 단계 →</button>
+                    <button onclick="closeSubjectAddModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">취소</button>
+                </div>
+            </div>
+
+            <!-- 2단계: 수행영역 설정 -->
+            <div id="step2AreaSetup" style="display: none;">
+                <h3 style="margin: 0 0 20px 0; color: #007bff;">🎯 2단계: 수행영역 설정</h3>
+                <div id="areaSetupContent">
+                    <!-- 수행영역 관련 내용이 표시됩니다 -->
+                </div>
+
+                <div style="text-align: center; border-top: 1px solid #ddd; padding-top: 20px;">
+                    <button onclick="goBackToStep1()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">← 이전</button>
+                    <button onclick="finalizeSubjectAddition()" style="padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">✓ 과목 추가</button>
+                    <button onclick="closeSubjectAddModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; margin: 0 5px;">취소</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1473,14 +1465,14 @@
         </div>
     </div>
 
+
     <script>
         // 전역 데이터
         let students = {}; // 학번: {name: "이름", grade: 3, class: 1, number: 1}
         let subjects = {}; // "학년-과목" 형태: {"3-사회": {areas: [{name: "영역명", maxScore: 20}]}}
         let scores = {}; // "학년-과목" 형태: {"3-사회": {학번: {영역명: 점수}}}
-        let publishedSubjects = {}; // "학년-과목" 형태: {"3-사회": true/false} - 학생 조회 허용 여부
-        let studentChecked = {}; // "학년-과목": {학번: {영역명: true/false}} - 학생이 영역별로 확인했는지 여부
-        let studentQuestions = {}; // "학년-과목": {학번: {영역명: "의문내용"}} - 학생이 제기한 의문사항
+        let publishedSubjects = {}; // "학년-과목" 형태: {"3-사회": true/false} - 점수 공개 여부 (UI 표시용)
+        let studentChecked = {}; // "학년-과목" 형태: {"3-사회": {학번: {영역명: true/false}}} - 학생 확인 상태
         let currentGrade = 3;
         let currentEditingStudent = null;
         let currentSubject = '';
@@ -1496,7 +1488,6 @@
             await loadScores();
             loadPublishedSubjects();
             await loadStudentChecked();
-            loadStudentQuestions();
 
             // 모든 과목의 기본값을 허용으로 설정
             setDefaultPublishStatus();
@@ -1516,9 +1507,9 @@
             if (hasInitialized) return;
 
             Object.keys(subjects).forEach(subjectKey => {
-                // undefined인 과목만 허용으로 설정
+                // undefined인 과목만 비허용으로 설정
                 if (publishedSubjects[subjectKey] === undefined) {
-                    publishedSubjects[subjectKey] = true;
+                    publishedSubjects[subjectKey] = false;
                 }
             });
 
@@ -1563,11 +1554,6 @@
 
             if (tab === 'subjects') {
                 updateSubjectSelectors();
-            } else if (tab === 'messages') {
-                // 메시지 탭으로 전환할 때 자동으로 문의사항 불러오기
-                if (window.firebaseInitialized) {
-                    loadStudentQuestions();
-                }
             }
         }
 
@@ -1966,172 +1952,218 @@
             };
 
 
-        // 과목 추가
-        function addSubject() {
-            const gradeSelect = document.getElementById('subjectGrade');
-            const nameInput = document.getElementById('subjectName');
+        // 과목 추가 관련 전역 변수
+        let currentSubjectData = {};
+        let selectedClassesForSubject = [];
 
-            const grade = gradeSelect.value;
-            const name = nameInput.value.trim();
+        // 과목 추가 단계별 모달 열기 (1단계: 반 선택)
+        function openSubjectAddModal(grade, name, teacher) {
+            currentSubjectData = { grade, name, teacher };
 
-            if (!name) {
-                alert('과목명을 입력해주세요.');
+            // 과목 정보 표시
+            const infoDiv = document.getElementById('subjectInfoDisplay');
+            const teacherText = teacher ? ` (${teacher})` : '';
+            infoDiv.innerHTML = `
+                <h5 style="margin: 0 0 5px 0; color: #007bff;">${grade}학년 ${name}${teacherText}</h5>
+                <p style="margin: 0; color: #666; font-size: 14px;">담당 반을 선택해주세요.</p>
+            `;
+
+            // 해당 학년의 반 목록 추출
+            const classesInGrade = new Set();
+            Object.entries(students).forEach(([studentNum, student]) => {
+                if (student.grade === parseInt(grade)) {
+                    classesInGrade.add(student.class);
+                }
+            });
+
+            // 반 목록을 정렬
+            const sortedClasses = Array.from(classesInGrade).sort((a, b) => a - b);
+
+            const contentDiv = document.getElementById('classSelectionContent');
+            contentDiv.innerHTML = '';
+
+            if (sortedClasses.length > 0) {
+                sortedClasses.forEach(classNum => {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `modalClass${classNum}`;
+                    checkbox.value = classNum;
+                    checkbox.style.marginRight = '8px';
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `modalClass${classNum}`;
+                    label.textContent = `${classNum}반`;
+                    label.style.cursor = 'pointer';
+
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'flex';
+                    wrapper.style.alignItems = 'center';
+                    wrapper.style.marginBottom = '10px';
+                    wrapper.appendChild(checkbox);
+                    wrapper.appendChild(label);
+
+                    contentDiv.appendChild(wrapper);
+                });
+            } else {
+                contentDiv.innerHTML = '<p style="color: #666; text-align: center;">해당 학년에 등록된 학생이 없습니다.</p>';
+            }
+
+            // 1단계 표시, 2단계 숨김
+            document.getElementById('step1ClassSelection').style.display = 'block';
+            document.getElementById('step2AreaSetup').style.display = 'none';
+
+            document.getElementById('subjectAddModal').style.display = 'block';
+        }
+
+        // 2단계로 이동 (수행영역 설정)
+        function goToStep2() {
+            const checkboxes = document.querySelectorAll('#classSelectionContent input[type="checkbox"]:checked');
+            selectedClassesForSubject = Array.from(checkboxes).map(cb => cb.value);
+
+            if (selectedClassesForSubject.length === 0) {
+                alert('최소 하나의 반을 선택해주세요.');
                 return;
             }
 
-            const subjectKey = `${grade}-${name}`;
+            // 과목키 생성
+            const { grade, name, teacher } = currentSubjectData;
+            const teacherPart = teacher ? `-${teacher}` : '';
+            const classPart = selectedClassesForSubject.sort((a, b) => a - b).join(',');
+            const subjectKey = `${grade}-${name}${teacherPart}-${classPart}`;
 
             if (subjects[subjectKey]) {
                 alert('이미 존재하는 과목입니다.');
                 return;
             }
 
-            // 평가계획에서 해당 과목 검색
-            const foundPlan = evaluationPlan[subjectKey];
+            // 평가계획 검색
+            const basePlanKey = `${grade}-${name}`;
+            let foundPlan = evaluationPlan[basePlanKey];
 
+            if (!foundPlan) {
+                for (const planKey in evaluationPlan) {
+                    const basePlanSubject = planKey.split('-')[1];
+                    if (name.includes(basePlanSubject) || name.startsWith(basePlanSubject)) {
+                        foundPlan = evaluationPlan[planKey];
+                        break;
+                    }
+                }
+            }
+
+            // 2단계 내용 설정
+            const areaContent = document.getElementById('areaSetupContent');
             if (foundPlan) {
-                // 평가계획에 있는 과목이면 자동 추가 모달 띄우기
-                pendingSubject = {
-                    key: subjectKey,
+                const classText = selectedClassesForSubject.sort((a, b) => a - b).map(c => `${c}반`).join(', ');
+                const areasText = foundPlan.map(area => `• ${area.name} (${area.maxScore}점)`).join('<br>');
+                const totalScore = foundPlan.reduce((sum, area) => sum + area.maxScore, 0);
+
+                areaContent.innerHTML = `
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                        <h5 style="margin: 0 0 10px 0; color: #007bff;">${grade}학년 ${name}${teacherPart} (${classText})</h5>
+                        <p style="margin: 0 0 15px 0; color: #666;">2025학년도 평가계획에서 다음 수행영역을 찾았습니다:</p>
+                        <div style="margin-bottom: 15px; line-height: 1.6;">
+                            ${areasText}
+                        </div>
+                        <div style="font-weight: bold; color: #28a745;">
+                            총 ${totalScore}점 (${foundPlan.length}개 영역)
+                        </div>
+                    </div>
+                    <p style="color: #666; margin: 0;">자동으로 수행영역을 추가하시겠습니까?</p>
+                `;
+                currentSubjectData.planAreas = foundPlan;
+                currentSubjectData.subjectKey = subjectKey;
+            } else {
+                const classText = selectedClassesForSubject.sort((a, b) => a - b).map(c => `${c}반`).join(', ');
+                areaContent.innerHTML = `
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                        <h5 style="margin: 0 0 10px 0; color: #007bff;">${grade}학년 ${name}${teacherPart} (${classText})</h5>
+                        <p style="margin: 0; color: #666;">평가계획에 등록된 수행영역이 없습니다.</p>
+                    </div>
+                    <p style="color: #666; margin: 0;">수행영역 없이 과목만 추가됩니다.</p>
+                `;
+                currentSubjectData.planAreas = null;
+                currentSubjectData.subjectKey = subjectKey;
+            }
+
+            // 1단계 숨김, 2단계 표시
+            document.getElementById('step1ClassSelection').style.display = 'none';
+            document.getElementById('step2AreaSetup').style.display = 'block';
+        }
+
+        // 1단계로 돌아가기
+        function goBackToStep1() {
+            document.getElementById('step1ClassSelection').style.display = 'block';
+            document.getElementById('step2AreaSetup').style.display = 'none';
+        }
+
+        // 최종 과목 추가
+        function finalizeSubjectAddition() {
+            const { grade, name, teacher, planAreas, subjectKey } = currentSubjectData;
+
+            if (planAreas) {
+                // 자동 영역 추가
+                subjects[subjectKey] = {
                     grade: parseInt(grade),
                     name: name,
-                    planAreas: foundPlan
+                    areas: [...planAreas]
                 };
-                openAutoAreaModal();
             } else {
-                // 평가계획에 없는 과목이면 바로 추가
+                // 영역 없이 과목만 추가
                 subjects[subjectKey] = {
                     grade: parseInt(grade),
                     name: name,
                     areas: []
                 };
-                scores[subjectKey] = {};
-                nameInput.value = '';
-
-                updateSubjectList();
-                updateSubjectSelectors();
-                saveSubjects();
             }
+
+            scores[subjectKey] = {};
+
+            // 입력 필드 초기화
+            clearSubjectForm();
+
+            updateSubjectList();
+            updateSubjectSelectors();
+            saveSubjects();
+
+            closeSubjectAddModal();
+
+            const planText = planAreas ? `${planAreas.length}개의 수행영역이 자동으로 설정되었습니다.` : '수행영역 없이 추가되었습니다.';
+            alert(`${grade}학년 ${name} 과목이 추가되었습니다.\n${planText}`);
         }
 
-        // 자동 영역 추가 모달 열기
-        function openAutoAreaModal() {
-            if (!pendingSubject || !pendingSubject.planAreas) {
-                console.error('pendingSubject가 올바르지 않습니다:', pendingSubject);
+        // 모달 닫기
+        function closeSubjectAddModal() {
+            document.getElementById('subjectAddModal').style.display = 'none';
+            currentSubjectData = {};
+            selectedClassesForSubject = [];
+        }
+
+        // 과목 입력 폼 초기화
+        function clearSubjectForm() {
+            document.getElementById('subjectName').value = '';
+            document.getElementById('teacherName').value = '';
+        }
+
+        // 과목 추가
+        function addSubject() {
+            const gradeSelect = document.getElementById('subjectGrade');
+            const nameInput = document.getElementById('subjectName');
+            const teacherInput = document.getElementById('teacherName');
+
+            const grade = gradeSelect.value;
+            const name = nameInput.value.trim();
+            const teacher = teacherInput.value.trim();
+
+            if (!name) {
+                alert('과목명을 입력해주세요.');
                 return;
             }
 
-            const info = document.getElementById('autoAreaInfo');
-            const subject = pendingSubject;
-
-            const areasText = subject.planAreas.map(area => `• ${area.name} (${area.maxScore}점)`).join('<br>');
-            const totalScore = subject.planAreas.reduce((sum, area) => sum + area.maxScore, 0);
-
-            info.innerHTML = `
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                    <h5 style="margin: 0 0 10px 0; color: #007bff;">${subject.grade}학년 ${subject.name}</h5>
-                    <p style="margin: 0 0 15px 0; color: #666;">2025학년도 평가계획에서 다음 수행영역을 찾았습니다:</p>
-                    <div style="margin-bottom: 15px; line-height: 1.6;">
-                        ${areasText}
-                    </div>
-                    <div style="font-weight: bold; color: #28a745;">
-                        총 ${totalScore}점 (${subject.planAreas.length}개 영역)
-                    </div>
-                </div>
-                <p style="color: #666; margin: 0;">자동으로 수행영역을 추가하시겠습니까?</p>
-            `;
-
-            // 모달 버튼에 데이터 저장
-            const confirmBtn = document.getElementById('confirmAutoBtn');
-            const addWithoutBtn = document.getElementById('addWithoutAreasBtn');
-
-            confirmBtn.setAttribute('data-subject', JSON.stringify(pendingSubject));
-            addWithoutBtn.setAttribute('data-subject', JSON.stringify(pendingSubject));
-
-            document.getElementById('autoAreaModal').style.display = 'block';
-
-            // 디버깅을 위한 로그
-            console.log('자동 영역 모달 열림:', pendingSubject);
+            // 단계별 모달 열기
+            openSubjectAddModal(grade, name, teacher);
         }
 
-        // 자동 영역 추가 확인
-        function confirmAutoAreaAddition() {
-            try {
-                // 버튼에서 저장된 데이터 가져오기
-                const confirmBtn = document.getElementById('confirmAutoBtn');
-                const subjectData = JSON.parse(confirmBtn.getAttribute('data-subject'));
 
-                if (!subjectData || !subjectData.grade || !subjectData.name) {
-                    console.error('저장된 과목 데이터가 올바르지 않습니다:', subjectData);
-                    closeAutoAreaModal();
-                    return;
-                }
-
-                const subjectKey = subjectData.key;
-                subjects[subjectKey] = {
-                    grade: subjectData.grade,
-                    name: subjectData.name,
-                    areas: [...subjectData.planAreas]
-                };
-                scores[subjectKey] = {};
-
-                // 입력 필드 초기화
-                document.getElementById('subjectName').value = '';
-
-                updateSubjectList();
-                updateSubjectSelectors();
-                saveSubjects();
-
-                const alertMessage = `${subjectData.grade}학년 ${subjectData.name} 과목이 추가되었습니다.\n${subjectData.planAreas.length}개의 수행영역이 자동으로 설정되었습니다.`;
-
-                closeAutoAreaModal();
-                alert(alertMessage);
-            } catch (error) {
-                console.error('자동 영역 추가 중 오류:', error);
-                closeAutoAreaModal();
-            }
-        }
-
-        // 영역 없이 과목만 추가
-        function addSubjectWithoutAreas() {
-            try {
-                // 버튼에서 저장된 데이터 가져오기
-                const addWithoutBtn = document.getElementById('addWithoutAreasBtn');
-                const subjectData = JSON.parse(addWithoutBtn.getAttribute('data-subject'));
-
-                if (!subjectData || !subjectData.grade || !subjectData.name) {
-                    console.error('저장된 과목 데이터가 올바르지 않습니다:', subjectData);
-                    closeAutoAreaModal();
-                    return;
-                }
-
-                const subjectKey = subjectData.key;
-                subjects[subjectKey] = {
-                    grade: subjectData.grade,
-                    name: subjectData.name,
-                    areas: []
-                };
-                scores[subjectKey] = {};
-
-                // 입력 필드 초기화
-                document.getElementById('subjectName').value = '';
-
-                updateSubjectList();
-                updateSubjectSelectors();
-                saveSubjects();
-
-                closeAutoAreaModal();
-            } catch (error) {
-                console.error('과목 추가 중 오류:', error);
-                closeAutoAreaModal();
-            }
-        }
-
-        // 자동 영역 모달 닫기
-        function closeAutoAreaModal() {
-            document.getElementById('autoAreaModal').style.display = 'none';
-            pendingSubject = null;
-        }
 
         // 과목 목록 업데이트 (학년별로 가로 3등분하여 표시)
         function updateSubjectList() {
@@ -2164,11 +2196,30 @@
 
                 if (groupedSubjects[grade] && groupedSubjects[grade].length > 0) {
                     groupedSubjects[grade].forEach(({key, data}) => {
+                        // 과목키에서 교사이름과 반 정보 추출
+                        const keyParts = key.split('-');
+                        const subjectName = data.name;
+
+                        // 과목키 형태: "학년-과목명-교사명-반목록" 또는 "학년-과목명-반목록"
+                        let displayName = subjectName;
+                        let teacherName = '';
+                        let classInfo = '';
+
+                        if (keyParts.length >= 4) {
+                            // 교사명이 있는 경우: "3-과학-홍길동-1,2"
+                            teacherName = keyParts[2];
+                            classInfo = keyParts[3];
+                            displayName = `${subjectName}(${teacherName})`;
+                        } else if (keyParts.length === 3) {
+                            // 교사명이 없는 경우: "3-사회-1,2,3"
+                            classInfo = keyParts[2];
+                        }
+
                         const subjectItem = document.createElement('div');
                         subjectItem.className = 'subject-item';
                         subjectItem.setAttribute('data-subject-key', key);
                         subjectItem.innerHTML = `
-                            <span onclick="selectSubjectForArea('${key}')" style="flex: 1;">${data.name} (${data.areas.length}개 영역)</span>
+                            <span onclick="selectSubjectForArea('${key}')" style="flex: 1;">${displayName} (${data.areas.length}개 영역)</span>
                             <span class="delete-btn" onclick="event.stopPropagation(); removeSubject('${key}')" title="과목 삭제">×</span>
                         `;
                         subjectItem.style.display = 'flex';
@@ -2196,7 +2247,16 @@
         // 과목 삭제
         function removeSubject(subjectKey) {
             const subject = subjects[subjectKey];
-            const displayName = `${subject.grade}학년-${subject.name}`;
+
+            // 과목키에서 교사이름 추출해서 표시명 생성
+            const keyParts = subjectKey.split('-');
+            let displayName = `${subject.grade}학년 ${subject.name}`;
+
+            if (keyParts.length >= 4) {
+                // 교사명이 있는 경우
+                const teacherName = keyParts[2];
+                displayName = `${subject.grade}학년 ${subject.name}(${teacherName})`;
+            }
 
             if (!confirm(`${displayName} 과목을 삭제하시겠습니까? (관련 점수도 모두 삭제됩니다)`)) return;
 
@@ -2251,10 +2311,23 @@
 
                 if (groupedSubjects[grade] && groupedSubjects[grade].length > 0) {
                     groupedSubjects[grade].forEach(({key, data}) => {
+                        // 과목키에서 교사이름 추출
+                        const keyParts = key.split('-');
+                        const subjectName = data.name;
+
+                        // 과목키 형태: "학년-과목명-교사명-반목록" 또는 "학년-과목명-반목록"
+                        let displayName = subjectName;
+
+                        if (keyParts.length >= 4) {
+                            // 교사명이 있는 경우: "3-과학-홍길동-1,2"
+                            const teacherName = keyParts[2];
+                            displayName = `${subjectName}(${teacherName})`;
+                        }
+
                         const subjectItem = document.createElement('div');
                         subjectItem.className = 'score-subject-item';
                         subjectItem.setAttribute('data-subject-key', key);
-                        subjectItem.innerHTML = `${data.name} (${data.areas.length}개 영역)`;
+                        subjectItem.innerHTML = `${displayName} (${data.areas.length}개 영역)`;
                         subjectItem.onclick = () => selectSubjectForScore(key);
                         subjectContainer.appendChild(subjectItem);
                     });
@@ -2432,23 +2505,6 @@
             saveScores();
         }
 
-        // 모든 과목 삭제
-        function clearAllSubjects() {
-            if (!confirm('모든 과목과 점수를 삭제하시겠습니까?')) return;
-
-            subjects = {};
-            scores = {};
-            currentSubject = '';
-            currentScoreSubject = '';
-
-            updateSubjectList();
-            updateSubjectSelectors();
-            document.getElementById('areaManagement').style.display = 'none';
-            document.getElementById('scoreUploadSection').style.display = 'none';
-
-            saveSubjects();
-            saveScores();
-        }
 
         // ===== 점수 관리 =====
 
@@ -2525,8 +2581,20 @@
             // 데이터 배열 생성
             const data = [headers];
 
+            // 해당 과목의 담당 반 학생들만 필터링
+            // 과목키에서 담당 반 정보 추출: "학년-과목명-교사명-반목록"
+            const keyParts = selectedSubjectKey.split('-');
+            const subjectGrade = parseInt(keyParts[0]);
+            const classesStr = keyParts[keyParts.length - 1]; // 마지막 부분이 반 목록
+            const assignedClasses = classesStr.split(',').map(c => parseInt(c));
+
+            // 해당 학년의 담당 반 학생들만 필터링
+            const filteredStudents = Object.entries(students).filter(([num, student]) => {
+                return student.grade === subjectGrade && assignedClasses.includes(student.class);
+            });
+
             // 학번 순으로 정렬하여 학생 데이터 추가
-            const sortedNumbers = Object.keys(students).sort();
+            const sortedNumbers = filteredStudents.map(([num]) => num).sort();
             sortedNumbers.forEach(num => {
                 const row = [num, students[num].name];
                 areas.forEach(() => row.push('')); // 빈 점수 칸
@@ -2577,22 +2645,35 @@
             const subject = subjects[currentScoreSubject];
             const areas = subject.areas;
             const subjectScores = scores[currentScoreSubject] || {};
-            const displayName = `${subject.grade}학년-${subject.name}`;
-            // 기본값을 허용으로 설정, 명시적으로 false인 경우만 비허용
-            const isPublished = publishedSubjects[currentScoreSubject] !== false;
+
+            // 과목키에서 교사이름과 담당 반 정보 추출
+            const keyParts = currentScoreSubject.split('-');
+            let displayName = `${subject.grade}학년 ${subject.name}`;
+
+            if (keyParts.length >= 4) {
+                // 교사명이 있는 경우
+                const teacherName = keyParts[2];
+                displayName = `${subject.grade}학년 ${subject.name}(${teacherName})`;
+            }
+
+            // 명시적으로 true인 경우만 허용, 기본값은 비허용
+            const isPublished = publishedSubjects[currentScoreSubject] === true;
 
             let tableHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h4 style="margin: 0;">📊 ${displayName} 점수표</h4>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
-                        <input type="checkbox" id="publishCheckbox" onchange="togglePublishStatus()"
-                               ${isPublished ? 'checked' : ''}
-                               title="학생 조회 허용 여부를 설정합니다"
-                               aria-label="학생 점수 조회 허용 설정">
-                        <span style="color: ${isPublished ? '#28a745' : '#6c757d'};">
-                            ${displayName} - 학생 조회 ${isPublished ? '허용 ✓' : '비허용'}
-                        </span>
-                    </label>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                            <input type="checkbox" id="publishCheckbox" onchange="togglePublishStatus()"
+                                   ${isPublished ? 'checked' : ''}
+                                   title="학생 조회 허용 여부를 설정합니다"
+                                   aria-label="학생 점수 조회 허용 설정">
+                            <span style="color: ${isPublished ? '#28a745' : '#6c757d'};">
+                                ${displayName} - 학생 조회 ${isPublished ? '허용 ✓' : '허용'}
+                            </span>
+                        </label>
+                        <button class="btn danger" onclick="clearScores()" style="padding: 5px 10px; font-size: 12px;">🗑️ 점수 초기화</button>
+                    </div>
                 </div>
                 <table class="score-table">
                     <thead>
@@ -2607,7 +2688,17 @@
                     <tbody>
             `;
 
-            const sortedNumbers = Object.keys(students).sort();
+            // 해당 과목의 담당 반 학생들만 필터링 (위에서 선언한 keyParts 재사용)
+            const subjectGrade = parseInt(keyParts[0]);
+            const classesStr = keyParts[keyParts.length - 1]; // 마지막 부분이 반 목록
+            const assignedClasses = classesStr.split(',').map(c => parseInt(c));
+
+            // 해당 학년의 담당 반 학생들만 필터링
+            const filteredStudents = Object.entries(students).filter(([num, student]) => {
+                return student.grade === subjectGrade && assignedClasses.includes(student.class);
+            });
+
+            const sortedNumbers = filteredStudents.map(([num]) => num).sort();
             sortedNumbers.forEach(num => {
                 const student = students[num];
                 const studentScores = subjectScores[num] || {};
@@ -2617,7 +2708,6 @@
                 const subject = subjects[currentScoreSubject];
                 let checkedAreas = 0;
                 let totalAreas = subject.areas.length;
-                let hasQuestions = false;
 
                 if (studentChecked[currentScoreSubject] && studentChecked[currentScoreSubject][num]) {
                     subject.areas.forEach(area => {
@@ -2627,17 +2717,10 @@
                     });
                 }
 
-                if (studentQuestions[currentScoreSubject] && studentQuestions[currentScoreSubject][num]) {
-                    hasQuestions = Object.keys(studentQuestions[currentScoreSubject][num]).length > 0;
-                }
-
                 let checkStatus = '';
                 let checkColor = '';
 
-                if (hasQuestions) {
-                    checkStatus = `❓ 의문(${checkedAreas}/${totalAreas})`;
-                    checkColor = '#dc3545';
-                } else if (checkedAreas === totalAreas) {
+                if (checkedAreas === totalAreas) {
                     checkStatus = `✅ 완료(${checkedAreas}/${totalAreas})`;
                     checkColor = '#28a745';
                 } else {
@@ -2653,43 +2736,13 @@
                     tableHTML += `<td>${score}</td>`;
                 });
 
-                const questionButton = hasQuestions ? ` <button onclick="showStudentQuestions('${num}')" style="background: #dc3545; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">확인</button>` : '';
-
-                tableHTML += `<td><strong>${total}</strong></td><td style="color: ${checkColor}; font-weight: bold;">${checkStatus}${questionButton}</td></tr>`;
+                tableHTML += `<td><strong>${total}</strong></td><td style="color: ${checkColor}; font-weight: bold;">${checkStatus}</td></tr>`;
             });
 
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
         }
 
-        // 학생 의문사항 확인
-        function showStudentQuestions(studentNumber) {
-            if (!currentScoreSubject || !studentQuestions[currentScoreSubject] || !studentQuestions[currentScoreSubject][studentNumber]) {
-                alert('의문사항이 없습니다.');
-                return;
-            }
-
-            const student = students[studentNumber];
-            const subject = subjects[currentScoreSubject];
-            const questions = studentQuestions[currentScoreSubject][studentNumber];
-
-            let message = `📋 ${student.name} (${studentNumber}) - ${subject.grade}학년 ${subject.name}\n\n`;
-            message += '📝 의문사항:\n\n';
-
-            Object.keys(questions).forEach(areaName => {
-                message += `🔸 ${areaName}:\n`;
-                message += `   "${questions[areaName]}"\n\n`;
-            });
-
-            message += '의문사항을 해결하셨다면 학생에게 직접 설명해주세요.';
-
-            if (confirm(message + '\n\n이 의문사항들을 삭제하시겠습니까?')) {
-                delete studentQuestions[currentScoreSubject][studentNumber];
-                saveStudentQuestions();
-                generateScoreTable(); // 테이블 새로고침
-                alert('의문사항이 삭제되었습니다.');
-            }
-        }
 
         // ===== 파일 처리 =====
 
@@ -2876,249 +2929,8 @@
             alert(`${currentScoreSubject} 점수 파일이 업로드되었습니다.`);
         }
 
-        // ===== 학생 조회 =====
 
-        // 학생 점수 확인
-        function checkScore() {
-            const studentNumber = document.getElementById('studentLoginNumber').value.trim();
-            const resultDiv = document.getElementById('studentResult');
 
-            if (!studentNumber) {
-                alert('학번을 입력하세요.');
-                return;
-            }
-
-            if (!students[studentNumber]) {
-                alert('등록되지 않은 학번입니다.');
-                return;
-            }
-
-            if (Object.keys(subjects).length === 0) {
-                resultDiv.innerHTML = `
-                    <div class="result-box">
-                        <h4>😔 아직 과목이 설정되지 않았습니다</h4>
-                    </div>
-                `;
-                resultDiv.style.display = 'block';
-                return;
-            }
-
-            // 등록된 과목만 필터링
-            const publishedSubjectKeys = Object.keys(publishedSubjects).filter(key => publishedSubjects[key] === true);
-
-            if (publishedSubjectKeys.length === 0) {
-                resultDiv.innerHTML = `
-                    <div class="result-box">
-                        <h4>📚 조회 가능한 점수가 없습니다</h4>
-                        <p style="color: #666;">선생님이 아직 점수를 등록하지 않았습니다.</p>
-                    </div>
-                `;
-                resultDiv.style.display = 'block';
-                return;
-            }
-
-            const student = students[studentNumber];
-            let resultHTML = `
-                <div class="result-box">
-                    <h4>🎉 ${student.name} (${student.grade}학년 ${student.class}반) 점수</h4>
-            `;
-
-            // 등록된 과목만 학년별로 그룹핑해서 표시
-            const groupedSubjects = {};
-            publishedSubjectKeys.forEach(subjectKey => {
-                const subject = subjects[subjectKey];
-                if (subject) {
-                    if (!groupedSubjects[subject.grade]) {
-                        groupedSubjects[subject.grade] = [];
-                    }
-                    groupedSubjects[subject.grade].push({key: subjectKey, data: subject});
-                }
-            });
-
-            // 학년 순으로 과목별 점수 표시 (3,2,1)
-            [3,2,1].forEach(grade => {
-                if (groupedSubjects[grade]) {
-                    resultHTML += `<h5 style="margin: 30px 0 15px 0; color: #28a745;">🎓 ${grade}학년 과목</h5>`;
-
-                    groupedSubjects[grade].forEach(({key, data}) => {
-                        const studentScores = scores[key] && scores[key][studentNumber] ? scores[key][studentNumber] : {};
-
-                        if (data.areas.length > 0) {
-                            let subjectTotal = 0;
-                            let subjectMaxTotal = 0;
-
-                            resultHTML += `
-                                <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
-                                    <h5 style="margin: 0 0 15px 0; color: #007bff;">📚 ${data.name}</h5>
-                                    <table style="width: 100%; margin: 10px 0;">
-                                        <tr style="background-color: #f8f9fa;">
-                                            <th style="padding: 8px; border: 1px solid #ddd;">영역</th>
-                                            <th style="padding: 8px; border: 1px solid #ddd;">점수</th>
-                                            <th style="padding: 8px; border: 1px solid #ddd;">만점</th>
-                                        </tr>
-                            `;
-
-                            data.areas.forEach(area => {
-                                const score = studentScores[area.name] || 0;
-                                subjectTotal += score;
-                                subjectMaxTotal += area.maxScore;
-
-                                resultHTML += `
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #ddd;">
-                                            <div style="display: flex; align-items: center; gap: 8px;">
-                                                <span>${area.name}</span>
-                                                <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
-                                                    <input type="checkbox" id="area_${key}_${area.name}" onchange="markAreaAsChecked('${key}', '${studentNumber}', '${area.name}')" style="transform: scale(0.9);"
-                                                           title="${area.name} 영역 점수 확인 완료 표시"
-                                                           aria-label="${area.name} 영역 확인 체크박스">
-                                                    <span style="color: #666;">확인</span>
-                                                </label>
-                                            </div>
-                                        </td>
-                                        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; color: #007bff;">
-                                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                                <span>${score}점</span>
-                                                <button onclick="askQuestion('${key}', '${studentNumber}', '${area.name}', ${score})"
-                                                        style="background: #ffc107; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">
-                                                    ?
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td style="padding: 8px; border: 1px solid #ddd;">${area.maxScore}점</td>
-                                    </tr>
-                                `;
-                            });
-
-                            resultHTML += `
-                                        <tr style="background-color: #e3f2fd;">
-                                            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">소계</td>
-                                            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; color: #007bff;">${subjectTotal}점</td>
-                                            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${subjectMaxTotal}점</td>
-                                        </tr>
-                                    </table>
-
-                                    <div id="subjectStatus_${key}" style="margin-top: 15px; text-align: center; padding: 10px; border-radius: 4px;">
-                                        <!-- 영역별 확인 상태가 동적으로 표시됩니다 -->
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-                }
-            });
-
-            resultHTML += '</div>';
-
-            resultDiv.innerHTML = resultHTML;
-            resultDiv.style.display = 'block';
-
-            // 체크박스 상태 복원 및 상태 표시 업데이트
-            publishedSubjectKeys.forEach(subjectKey => {
-                const subject = subjects[subjectKey];
-                if (subject && subject.areas) {
-                    // 영역별 체크박스 상태 복원
-                    subject.areas.forEach(area => {
-                        const checkbox = document.getElementById(`area_${subjectKey}_${area.name}`);
-                        if (checkbox && studentChecked[subjectKey] && studentChecked[subjectKey][studentNumber] && studentChecked[subjectKey][studentNumber][area.name]) {
-                            checkbox.checked = true;
-                        }
-                    });
-
-                    // 과목별 상태 표시 업데이트
-                    updateSubjectStatus(subjectKey, studentNumber);
-                }
-            });
-        }
-
-        // 영역별 확인 표시
-        function markAreaAsChecked(subjectKey, studentNumber, areaName) {
-            if (!studentChecked[subjectKey]) {
-                studentChecked[subjectKey] = {};
-            }
-            if (!studentChecked[subjectKey][studentNumber]) {
-                studentChecked[subjectKey][studentNumber] = {};
-            }
-
-            const checkbox = document.getElementById(`area_${subjectKey}_${areaName}`);
-            studentChecked[subjectKey][studentNumber][areaName] = checkbox.checked;
-
-            saveStudentChecked();
-            updateSubjectStatus(subjectKey, studentNumber);
-        }
-
-        // 과목별 상태 표시 업데이트
-        function updateSubjectStatus(subjectKey, studentNumber) {
-            const subject = subjects[subjectKey];
-            const statusDiv = document.getElementById(`subjectStatus_${subjectKey}`);
-
-            if (!subject || !statusDiv) return;
-
-            const totalAreas = subject.areas.length;
-            let checkedAreas = 0;
-            let questionsCount = 0;
-
-            // 확인된 영역 수 계산
-            if (studentChecked[subjectKey] && studentChecked[subjectKey][studentNumber]) {
-                subject.areas.forEach(area => {
-                    if (studentChecked[subjectKey][studentNumber][area.name]) {
-                        checkedAreas++;
-                    }
-                });
-            }
-
-            // 의문사항 수 계산
-            if (studentQuestions[subjectKey] && studentQuestions[subjectKey][studentNumber]) {
-                questionsCount = Object.keys(studentQuestions[subjectKey][studentNumber]).length;
-            }
-
-            let statusHTML = '';
-            if (checkedAreas === totalAreas) {
-                statusHTML = `
-                    <div style="background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;">
-                        ✅ 모든 영역 확인 완료 (${checkedAreas}/${totalAreas})
-                    </div>
-                `;
-            } else {
-                statusHTML = `
-                    <div style="background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7;">
-                        ⏳ 확인 진행 중 (${checkedAreas}/${totalAreas})
-                    </div>
-                `;
-            }
-
-            if (questionsCount > 0) {
-                statusHTML += `
-                    <div style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; margin-top: 5px;">
-                        ❓ 의문사항 ${questionsCount}건
-                    </div>
-                `;
-            }
-
-            statusDiv.innerHTML = statusHTML;
-        }
-
-        // 점수 의문사항 제기
-        function askQuestion(subjectKey, studentNumber, areaName, score) {
-            const subject = subjects[subjectKey];
-            const student = students[studentNumber];
-            const question = prompt(`📝 ${subject.grade}학년-${subject.name} > ${areaName} (${score}점)\n\n궁금한 점이나 의문사항을 입력하세요:`);
-
-            if (question && question.trim()) {
-                if (!studentQuestions[subjectKey]) {
-                    studentQuestions[subjectKey] = {};
-                }
-                if (!studentQuestions[subjectKey][studentNumber]) {
-                    studentQuestions[subjectKey][studentNumber] = {};
-                }
-
-                studentQuestions[subjectKey][studentNumber][areaName] = question.trim();
-                saveStudentQuestions();
-                updateSubjectStatus(subjectKey, studentNumber);
-
-                alert(`📩 의문사항이 선생님께 전달되었습니다.\n\n${areaName}: ${question.trim()}`);
-            }
-        }
 
         // ===== 유틸리티 함수 =====
 
@@ -3172,11 +2984,7 @@
                 saveStudentChecked();
             }
 
-            // 해당 과목의 의문 사항도 초기화
-            if (studentQuestions[currentScoreSubject]) {
-                studentQuestions[currentScoreSubject] = {};
-                saveStudentQuestions();
-            }
+
 
             generateScoreTable();
             saveScores();
@@ -3347,18 +3155,9 @@
             }
         }
 
-        function saveStudentQuestions() {
-            localStorage.setItem('studentQuestions', JSON.stringify(studentQuestions));
-            // Firebase에도 동기화
-            syncToFirebase('studentQuestions', studentQuestions);
-        }
 
-        function loadStudentQuestions() {
-            const saved = localStorage.getItem('studentQuestions');
-            if (saved) {
-                studentQuestions = JSON.parse(saved);
-            }
-        }
+
+
 
         // ===== 이벤트 리스너 =====
 
@@ -3387,19 +3186,16 @@
                 if (e.key === 'Enter') addArea();
             });
 
-            // 학생 조회
-            document.getElementById('studentLoginNumber').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') checkScore();
-            });
 
             // 모달 외부 클릭시 닫기
             document.getElementById('studentModal').addEventListener('click', function(e) {
                 if (e.target === this) closeModal();
             });
 
-            document.getElementById('autoAreaModal').addEventListener('click', function(e) {
-                if (e.target === this) closeAutoAreaModal();
+            document.getElementById('subjectAddModal').addEventListener('click', function(e) {
+                if (e.target === this) closeSubjectAddModal();
             });
+
         });
 
         // ===== Firebase 통합 기능 =====
@@ -3484,50 +3280,16 @@
                 }
             });
 
-            // 학생 의문사항 리스너
-            const questionsRef = window.firebase.ref(window.firebase.database, 'studentQuestions');
-            firebaseListeners.studentQuestions = window.firebase.onValue(questionsRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    const previousQuestions = JSON.stringify(studentQuestions);
-                    studentQuestions = data;
-                    localStorage.setItem('studentQuestions', JSON.stringify(studentQuestions));
 
-                    // 새로운 의문사항이 추가되었는지 확인하고 알림
-                    if (previousQuestions !== JSON.stringify(studentQuestions)) {
-                        checkForNewQuestions();
-                    }
 
-                    // 현재 점수 관리 탭이 열려있다면 테이블 새로고침
-                    if (currentScoreSubject && document.getElementById('admin-content').classList.contains('active')) {
-                        generateScoreTable();
-                    }
-                }
-            });
 
             console.log('Firebase 실시간 리스너가 설정되었습니다.');
         }
 
-        // 새로운 의문사항 확인 및 알림
-        function checkForNewQuestions() {
-            Object.keys(studentQuestions).forEach(subjectKey => {
-                const subjectQuestions = studentQuestions[subjectKey];
-                Object.keys(subjectQuestions).forEach(studentNumber => {
-                    const questionCount = Object.keys(subjectQuestions[studentNumber]).length;
-                    if (questionCount > 0) {
-                        const student = students[studentNumber];
-                        const subject = subjects[subjectKey];
-                        if (student && subject) {
-                            showConnectionStatus(`새 의문사항: ${student.name} (${subject.name})`, 'error');
-                        }
-                    }
-                });
-            });
-        }
 
         // 기본 비밀번호 생성 함수
         function generateDefaultPassword(studentNumber) {
-            return '0123'; // 모든 학생의 초기 비밀번호는 0123
+            return '123456'; // 모든 학생의 초기 비밀번호는 123456
         }
 
         // 비밀번호 보기/숨기기 토글
@@ -3550,22 +3312,22 @@
 
             const student = students[currentEditingStudent];
             const confirmMsg = `${student.name} 학생의 비밀번호를 초기화하시겠습니까?\n\n` +
-                              `• 비밀번호가 0123으로 재설정됩니다\n` +
+                              `• 비밀번호가 123456으로 재설정됩니다\n` +
                               `• 학생은 다음 로그인 시 새 비밀번호를 설정해야 합니다\n` +
                               `• 이 작업은 되돌릴 수 없습니다`;
 
             if (!confirm(confirmMsg)) return;
 
-            // 비밀번호를 0123으로 초기화
-            students[currentEditingStudent].password = '0123';
+            // 비밀번호를 123456으로 초기화
+            students[currentEditingStudent].password = '123456';
 
             // 모달의 비밀번호 필드 업데이트
-            document.getElementById('modalStudentPassword').value = '0123';
+            document.getElementById('modalStudentPassword').value = '123456';
 
             // 저장
             saveStudents();
 
-            alert(`${student.name} 학생의 비밀번호가 0123으로 초기화되었습니다.\n학생에게 첫 로그인 시 새 비밀번호를 설정하도록 안내해주세요.`);
+            alert(`${student.name} 학생의 비밀번호가 123456으로 초기화되었습니다.\n학생에게 첫 로그인 시 새 비밀번호를 설정하도록 안내해주세요.`);
         }
 
         // Firebase 설정 모달 관련 함수들
@@ -3838,210 +3600,6 @@
             }
         });
 
-        // 메시지 관련 전역 변수
-        let allQuestions = {};
-        let allReplies = {};
-        let allStudents = {};
-
-        // 학생 문의사항 불러오기
-        function loadStudentQuestions() {
-            if (!window.firebaseInitialized) {
-                alert('Firebase가 초기화되지 않았습니다.');
-                return;
-            }
-
-            const messagesContainer = document.getElementById('messagesContainer');
-            messagesContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">문의사항을 불러오는 중...</div>';
-
-            try {
-                // 학생 문의, 교사 답변, 학생 정보를 모두 불러오기
-                const questionsRef = window.firebase.ref(window.firebase.database, 'studentQuestions');
-                const repliesRef = window.firebase.ref(window.firebase.database, 'teacherReplies');
-                const studentsRef = window.firebase.ref(window.firebase.database, 'students');
-                const subjectsRef = window.firebase.ref(window.firebase.database, 'subjects');
-
-                Promise.all([
-                    new Promise((resolve) => {
-                        window.firebase.onValue(questionsRef, (snapshot) => {
-                            allQuestions = snapshot.val() || {};
-                            resolve();
-                        }, { onlyOnce: true });
-                    }),
-                    new Promise((resolve) => {
-                        window.firebase.onValue(repliesRef, (snapshot) => {
-                            allReplies = snapshot.val() || {};
-                            resolve();
-                        }, { onlyOnce: true });
-                    }),
-                    new Promise((resolve) => {
-                        window.firebase.onValue(studentsRef, (snapshot) => {
-                            allStudents = snapshot.val() || {};
-                            resolve();
-                        }, { onlyOnce: true });
-                    }),
-                    new Promise((resolve) => {
-                        window.firebase.onValue(subjectsRef, (snapshot) => {
-                            const subjects = snapshot.val() || {};
-                            updateMessageFilterOptions(subjects);
-                            resolve();
-                        }, { onlyOnce: true });
-                    })
-                ]).then(() => {
-                    displayStudentQuestions();
-                });
-
-            } catch (error) {
-                console.error('문의사항 로딩 오류:', error);
-                messagesContainer.innerHTML = '<div style="text-align: center; color: #dc3545; padding: 40px;">문의사항을 불러오는 중 오류가 발생했습니다.</div>';
-            }
-        }
-
-        // 메시지 필터 옵션 업데이트
-        function updateMessageFilterOptions(subjects) {
-            const subjectFilter = document.getElementById('messageFilterSubject');
-            subjectFilter.innerHTML = '<option value="">전체 과목</option>';
-
-            for (const subjectKey in subjects) {
-                const option = document.createElement('option');
-                option.value = subjectKey;
-                option.textContent = subjects[subjectKey].name || subjectKey;
-                subjectFilter.appendChild(option);
-            }
-        }
-
-        // 학생 문의사항 표시
-        function displayStudentQuestions() {
-            const messagesContainer = document.getElementById('messagesContainer');
-            let questionsArray = [];
-
-            // 문의사항을 배열로 변환
-            for (const subjectKey in allQuestions) {
-                const subjectQuestions = allQuestions[subjectKey];
-                for (const studentNumber in subjectQuestions) {
-                    const studentQuestions = subjectQuestions[studentNumber];
-                    for (const areaName in studentQuestions) {
-                        const question = studentQuestions[areaName];
-                        if (question && question.trim()) {
-                            const reply = allReplies[subjectKey] && allReplies[subjectKey][studentNumber] && allReplies[subjectKey][studentNumber][areaName];
-                            const student = allStudents[studentNumber];
-
-                            questionsArray.push({
-                                subjectKey,
-                                studentNumber,
-                                areaName,
-                                question: question.trim(),
-                                reply: reply ? reply.trim() : null,
-                                studentName: student ? student.name : `학번 ${studentNumber}`,
-                                timestamp: Date.now() // 실제로는 Firebase timestamp를 사용할 수 있음
-                            });
-                        }
-                    }
-                }
-            }
-
-            if (questionsArray.length === 0) {
-                messagesContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">아직 학생 문의가 없습니다.</div>';
-                return;
-            }
-
-            // 최신순으로 정렬
-            questionsArray.sort((a, b) => b.timestamp - a.timestamp);
-
-            let html = '';
-            questionsArray.forEach((item, index) => {
-                const isAnswered = item.reply !== null;
-                const statusClass = isAnswered ? 'answered' : '';
-
-                html += `
-                    <div class="message-item ${statusClass}" data-subject="${item.subjectKey}" data-status="${isAnswered ? 'answered' : 'unanswered'}">
-                        <div class="message-header">
-                            <div>
-                                <strong>${item.studentName}</strong>
-                                <span class="message-info">${item.subjectKey} - ${item.areaName}</span>
-                            </div>
-                            <span class="status-badge status-${isAnswered ? 'answered' : 'unanswered'}">
-                                ${isAnswered ? '답변완료' : '미답변'}
-                            </span>
-                        </div>
-
-                        <div class="message-content">
-                            💬 ${item.question}
-                        </div>
-
-                        ${isAnswered ? `
-                            <div class="message-reply">
-                                <strong>📝 교사 답변:</strong><br>
-                                ${item.reply}
-                            </div>
-                        ` : `
-                            <div class="reply-form">
-                                <textarea class="reply-textarea" placeholder="답변을 입력하세요..." id="reply_${index}"></textarea>
-                                <div class="reply-buttons">
-                                    <button class="btn btn-primary" onclick="sendReply('${item.subjectKey}', '${item.studentNumber}', '${item.areaName}', ${index})">
-                                        📤 답변 보내기
-                                    </button>
-                                </div>
-                            </div>
-                        `}
-                    </div>
-                `;
-            });
-
-            messagesContainer.innerHTML = html;
-        }
-
-        // 답변 보내기
-        function sendReply(subjectKey, studentNumber, areaName, index) {
-            const replyTextarea = document.getElementById(`reply_${index}`);
-            const replyText = replyTextarea.value.trim();
-
-            if (!replyText) {
-                alert('답변을 입력해주세요.');
-                return;
-            }
-
-            if (!window.firebaseInitialized) {
-                alert('Firebase가 초기화되지 않았습니다.');
-                return;
-            }
-
-            try {
-                const replyRef = window.firebase.ref(window.firebase.database, `teacherReplies/${subjectKey}/${studentNumber}/${areaName}`);
-
-                window.firebase.set(replyRef, replyText).then(() => {
-                    alert('답변이 전송되었습니다!');
-                    // 문의사항 다시 불러오기
-                    loadStudentQuestions();
-                }).catch((error) => {
-                    console.error('답변 전송 오류:', error);
-                    alert('답변 전송 중 오류가 발생했습니다: ' + error.message);
-                });
-            } catch (error) {
-                console.error('답변 전송 오류:', error);
-                alert('답변 전송 중 오류가 발생했습니다: ' + error.message);
-            }
-        }
-
-        // 메시지 필터링
-        function filterMessages() {
-            const subjectFilter = document.getElementById('messageFilterSubject').value;
-            const statusFilter = document.getElementById('messageFilterStatus').value;
-            const messageItems = document.querySelectorAll('.message-item');
-
-            messageItems.forEach(item => {
-                const itemSubject = item.getAttribute('data-subject');
-                const itemStatus = item.getAttribute('data-status');
-
-                const subjectMatch = !subjectFilter || itemSubject === subjectFilter;
-                const statusMatch = !statusFilter || itemStatus === statusFilter;
-
-                if (subjectMatch && statusMatch) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
 
         // Firebase 리스너 정리 (페이지 언로드 시)
         window.addEventListener('beforeunload', () => {
