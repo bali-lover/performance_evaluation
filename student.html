@@ -577,7 +577,9 @@
                     const assignedClasses = assignedClassesStr.split(',').map(c => parseInt(c));
 
                     // 학생의 반이 담당 반 목록에 포함되어 있는지 확인
-                    if (!assignedClasses.includes(parseInt(studentData.class))) {
+                    // 학번에서 반 정보 추출 (예: "30101" → 3학년 1반)
+                    const studentClass = parseInt(studentNumber.toString().charAt(1)); // 두 번째 자리가 반
+                    if (!assignedClasses.includes(studentClass)) {
                         continue; // 학생이 속한 반이 담당 반이 아니면 표시하지 않음
                     }
                 }
@@ -764,7 +766,8 @@
                         const assignedClasses = assignedClassesStr.split(',').map(c => parseInt(c));
 
                         // 학생의 반이 담당 반 목록에 포함되어 있는지 확인
-                        const studentClass = parseInt(students[studentNumber]?.class);
+                        // 학번에서 반 정보 추출
+                        const studentClass = parseInt(studentNumber.toString().charAt(1));
                         if (!assignedClasses.includes(studentClass)) {
                             continue; // 학생이 속한 반이 담당 반이 아니면 스킵
                         }
