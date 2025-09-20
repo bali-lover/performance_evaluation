@@ -2713,7 +2713,9 @@
                 let checkedAreas = 0;
                 let totalAreas = subject.areas.length;
 
-                if (studentChecked[currentScoreSubject] && studentChecked[currentScoreSubject][num]) {
+                if (studentChecked[currentScoreSubject] &&
+                    studentChecked[currentScoreSubject][num] &&
+                    typeof studentChecked[currentScoreSubject][num] === 'object') {
                     subject.areas.forEach(area => {
                         const areaStatus = studentChecked[currentScoreSubject][num][area.name];
                         if (areaStatus === true) {
@@ -2721,6 +2723,9 @@
                         }
                     });
                 }
+
+                // 디버깅용 로그 (임시)
+                console.log(`학생 ${num}: 확인 데이터`, studentChecked[currentScoreSubject]?.[num], `=> ${checkedAreas}/${totalAreas}`);
 
 
                 let checkStatus = '';
@@ -3329,13 +3334,13 @@
             const checkedRef = window.firebase.ref(window.firebase.database, 'studentChecked');
             firebaseListeners.studentChecked = window.firebase.onValue(checkedRef, (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    studentChecked = data;
-                    localStorage.setItem('studentChecked', JSON.stringify(studentChecked));
-                    // 현재 점수 관리 탭이 열려있다면 테이블 새로고침
-                    if (currentScoreSubject && document.getElementById('admin-content').classList.contains('active')) {
-                        generateScoreTable();
-                    }
+                // 데이터가 있든 없든 항상 업데이트 (삭제된 경우 빈 객체로 설정)
+                studentChecked = data || {};
+                localStorage.setItem('studentChecked', JSON.stringify(studentChecked));
+                console.log('Firebase 확인 상태 업데이트:', studentChecked);
+                // 현재 점수 관리 탭이 열려있다면 테이블 새로고침
+                if (currentScoreSubject && document.getElementById('admin-content').classList.contains('active')) {
+                    generateScoreTable();
                 }
             });
 
