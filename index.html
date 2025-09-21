@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>수행평가 점수 확인 시스템 v1</title>
+    <title>수행평가 점수 확인 시스템 v2 (스마트 파싱)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Firebase SDK -->
     <script type="module">
@@ -688,6 +688,202 @@
             transform: scale(1.02);
         }
 
+        /* v2: 스마트 파싱 스타일 */
+        .smart-upload-container {
+            margin: 20px 0;
+        }
+
+        .upload-mode-selector {
+            margin-bottom: 20px;
+        }
+
+        .upload-modes {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .upload-mode-btn {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .upload-mode-btn:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+
+        .upload-mode-btn.active {
+            border-color: #007bff;
+            background-color: #007bff;
+            color: white;
+        }
+
+        .smart-upload {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+        }
+
+        .smart-upload:hover {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edd4 100%);
+        }
+
+        .smart-upload.dragover {
+            border-color: #28a745 !important;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edd4 100%) !important;
+            transform: scale(1.02) !important;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .smart-features {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        #smartAnalysisSection {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .file-analysis-info {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .mapping-table th,
+        .mapping-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .mapping-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .mapping-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .similarity-score {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .similarity-high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .similarity-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .similarity-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .smart-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .data-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .data-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .data-preview th,
+        .data-preview td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .data-preview th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+
+        .detected-header {
+            background-color: #e7f3ff !important;
+            font-weight: bold;
+        }
+
+        .detected-data {
+            background-color: #f0f8f0 !important;
+        }
+
+        /* 매핑 확인 체크박스 스타일 */
+        .mapping-table input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .mapping-table label {
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .mapping-table td:last-child {
+            text-align: center;
+            white-space: nowrap;
+        }
+
         .stats-box {
             background-color: #e3f2fd;
             border: 1px solid #2196f3;
@@ -1290,12 +1486,53 @@
             </div>
 
             <div id="scoreUploadSection" style="display: none;">
-                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                    <h4>📤 점수표 엑셀 파일 업로드</h4>
-                    <p>완성된 점수표 엑셀 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
-                    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;" onchange="uploadFile(event)"
-                           title="점수표 엑셀 파일을 선택하세요"
-                           aria-label="점수표 파일 선택">
+                <!-- v2: 스마트 파싱 업로드 섹션 -->
+                <div class="smart-upload-container">
+                    <div class="upload-mode-selector">
+                        <h4>📤 점수 업로드 방식 선택</h4>
+                        <div class="upload-modes">
+                            <button class="upload-mode-btn active" onclick="setUploadMode('template')" id="templateModeBtn">
+                                📋 템플릿 업로드
+                            </button>
+                            <button class="upload-mode-btn" onclick="setUploadMode('smart')" id="smartModeBtn">
+                                🎯 스마트 파싱 (테스트)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 기존 템플릿 방식 -->
+                    <div id="templateUploadArea" class="upload-area" onclick="document.getElementById('fileInput').click()">
+                        <h4>📤 점수표 엑셀 파일 업로드</h4>
+                        <p>완성된 점수표 엑셀 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
+                        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;" onchange="uploadFile(event)"
+                               title="점수표 엑셀 파일을 선택하세요"
+                               aria-label="점수표 파일 선택">
+                    </div>
+
+                    <!-- 스마트 파싱 업로드 -->
+                    <div id="smartUploadArea" class="upload-area smart-upload" style="display: none;" onclick="document.getElementById('smartFileInput').click()">
+                        <h4>🎯 스마트 파싱 업로드</h4>
+                        <p>어떤 형식의 점수 파일이든 업로드하세요! 자동으로 분석하여 매칭해드립니다.</p>
+                        <div class="smart-features">
+                            <span class="feature">✓ 자동 헤더 감지</span>
+                            <span class="feature">✓ 영역명 유사도 매칭</span>
+                            <span class="feature">✓ 증분 업데이트</span>
+                        </div>
+                        <input type="file" id="smartFileInput" accept=".xlsx,.xls" style="display: none;" onchange="smartUploadFile(event)"
+                               title="점수 파일을 선택하세요"
+                               aria-label="스마트 파싱 파일 선택">
+                    </div>
+
+                    <!-- 스마트 파싱 분석 결과 -->
+                    <div id="smartAnalysisSection" style="display: none;">
+                        <h4>🔗 영역 매칭</h4>
+                        <div id="mappingInterface"></div>
+
+                        <div class="smart-actions">
+                            <button class="btn" onclick="cancelSmartUpload()">❌ 취소</button>
+                            <button class="btn success" onclick="confirmSmartUpload()" id="confirmSmartBtn" disabled>✅ 적용</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="scoreTableContainer">
@@ -1431,11 +1668,6 @@
 
             <div id="connectionStatus" style="margin: 15px 0; padding: 10px; border-radius: 4px; display: none;"></div>
 
-            <div style="margin-bottom: 15px; padding: 15px; background: #e8f4f8; border-radius: 6px; border: 1px solid #bee5eb;">
-                <h4 style="margin: 0 0 10px 0; color: #0c5460;">🎓 학생용 링크 생성</h4>
-                <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">Firebase 설정이 저장된 후 학생들이 사용할 수 있는 링크를 생성할 수 있습니다.</p>
-                <button onclick="generateStudentLink()" style="padding: 8px 16px; border: none; background: #17a2b8; color: white; border-radius: 4px; cursor: pointer; font-size: 14px;">🔗 학생용 링크 생성</button>
-            </div>
 
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button onclick="closeFirebaseModal()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">취소</button>
@@ -1501,6 +1733,8 @@
             setupStudentUploadDragAndDrop();
             updateMatrix();
             updateSubjectSelectors();
+
+            // v2: 스마트 파싱 드래그 앤 드롭 초기화는 모드 전환 시에 설정됨
 
             // Firebase 자동 초기화 시도
             await autoInitializeFirebase();
@@ -2784,26 +3018,36 @@
 
         // ===== 파일 처리 =====
 
-        // 드래그 앤 드롭 설정
+        // 템플릿 업로드 드래그 앤 드롭 설정
         function setupDragAndDrop() {
-            const uploadArea = document.getElementById('uploadArea');
+            const templateUploadArea = document.getElementById('templateUploadArea');
+            if (!templateUploadArea) return;
 
-            uploadArea.addEventListener('dragover', (e) => {
+            templateUploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                uploadArea.classList.add('dragover');
+                templateUploadArea.classList.add('dragover');
             });
 
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
+            templateUploadArea.addEventListener('dragleave', (e) => {
+                // 자식 요소로 인한 잘못된 dragleave 방지
+                if (!templateUploadArea.contains(e.relatedTarget)) {
+                    templateUploadArea.classList.remove('dragover');
+                }
             });
 
-            uploadArea.addEventListener('drop', (e) => {
+            templateUploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                uploadArea.classList.remove('dragover');
+                templateUploadArea.classList.remove('dragover');
 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    handleFileUpload(files[0]);
+                    const file = files[0];
+                    // 파일 형식 검사
+                    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                        handleFileUpload(file);
+                    } else {
+                        alert('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+                    }
                 }
             });
         }
@@ -3721,6 +3965,660 @@
                 closeAutoAreaModal();
             }
         });
+
+        // ===== v2: 스마트 파싱 기능 =====
+
+        // 스마트 파싱 관련 전역 변수
+        let currentUploadMode = 'template';
+        let smartFileData = null;
+        let detectedStructure = null;
+        let currentMapping = {};
+
+        // 업로드 모드 전환
+        function setUploadMode(mode) {
+            currentUploadMode = mode;
+
+            // 버튼 상태 업데이트
+            document.querySelectorAll('.upload-mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (mode === 'template') {
+                document.getElementById('templateModeBtn').classList.add('active');
+                document.getElementById('templateUploadArea').style.display = 'block';
+                document.getElementById('smartUploadArea').style.display = 'none';
+                document.getElementById('smartAnalysisSection').style.display = 'none';
+            } else {
+                document.getElementById('smartModeBtn').classList.add('active');
+                document.getElementById('templateUploadArea').style.display = 'none';
+                document.getElementById('smartUploadArea').style.display = 'block';
+                // 스마트 파싱 드래그 앤 드롭 활성화
+                setupSmartUploadDragAndDrop();
+            }
+        }
+
+        // 스마트 파싱 드래그 앤 드롭 설정
+        function setupSmartUploadDragAndDrop() {
+            const smartUploadArea = document.getElementById('smartUploadArea');
+            if (!smartUploadArea) return;
+
+            smartUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                smartUploadArea.classList.add('dragover');
+                smartUploadArea.style.backgroundColor = '#e8f5e8';
+                smartUploadArea.style.borderColor = '#28a745';
+                smartUploadArea.style.transform = 'scale(1.02)';
+            });
+
+            smartUploadArea.addEventListener('dragleave', (e) => {
+                // 자식 요소로 인한 잘못된 dragleave 방지
+                if (!smartUploadArea.contains(e.relatedTarget)) {
+                    smartUploadArea.classList.remove('dragover');
+                    smartUploadArea.style.backgroundColor = '';
+                    smartUploadArea.style.borderColor = '';
+                    smartUploadArea.style.transform = '';
+                }
+            });
+
+            smartUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                smartUploadArea.classList.remove('dragover');
+                smartUploadArea.style.backgroundColor = '';
+                smartUploadArea.style.borderColor = '';
+                smartUploadArea.style.transform = '';
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    // 파일 형식 검사
+                    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                        // 스마트 파일 입력에 파일 설정하고 처리
+                        const smartFileInput = document.getElementById('smartFileInput');
+                        smartFileInput.files = files;
+                        smartUploadFile({ target: { files: [file] } });
+                    } else {
+                        alert('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+                    }
+                }
+            });
+        }
+
+        // 스마트 업로드 파일 처리
+        function smartUploadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!currentScoreSubject) {
+                alert('먼저 과목을 선택해주세요.');
+                return;
+            }
+
+            if (!subjects[currentScoreSubject] || subjects[currentScoreSubject].areas.length === 0) {
+                alert('먼저 수행영역을 설정해주세요.');
+                return;
+            }
+
+            if (Object.keys(students).length === 0) {
+                alert('먼저 학생을 등록해주세요.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+                    smartFileData = jsonData;
+                    analyzeFileStructure(jsonData);
+
+                } catch (error) {
+                    alert('파일을 읽는 중 오류가 발생했습니다: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 파일 구조 자동 분석
+        function analyzeFileStructure(data) {
+            console.log('파일 분석 시작:', data);
+
+            const structure = {
+                totalRows: data.length,
+                totalCols: data.length > 0 ? Math.max(...data.map(row => row.length)) : 0,
+                headerRow: -1,
+                dataStartRow: -1,
+                studentNumberCol: -1,
+                nameCol: -1,
+                scoreColumns: [],
+                detectedSubject: '',
+                detectedAreas: []
+            };
+
+            // 헤더 행 감지 (번호, 학번, 성명 등이 포함된 행)
+            for (let i = 0; i < Math.min(data.length, 10); i++) {
+                const row = data[i];
+                if (!row) continue;
+
+                const rowText = row.join('').toLowerCase();
+                if (rowText.includes('번호') || rowText.includes('학번') || rowText.includes('성명') ||
+                    rowText.includes('이름') || rowText.includes('번') && rowText.includes('명')) {
+                    structure.headerRow = i;
+                    break;
+                }
+            }
+
+            // 헤더가 감지된 경우 열 분석
+            if (structure.headerRow >= 0) {
+                const headerRow = data[structure.headerRow];
+
+                for (let col = 0; col < headerRow.length; col++) {
+                    const cellValue = String(headerRow[col] || '').toLowerCase();
+
+                    // 학번 열 감지
+                    if (cellValue.includes('학번') || cellValue.includes('번호')) {
+                        structure.studentNumberCol = col;
+                    }
+                    // 이름 열 감지
+                    else if (cellValue.includes('성명') || cellValue.includes('이름') || cellValue.includes('명')) {
+                        structure.nameCol = col;
+                    }
+                    // 점수 관련 열 감지 (숫자나 점수 관련 텍스트)
+                    else if (cellValue && !cellValue.includes('비고') && !cellValue.includes('합계') &&
+                            !cellValue.includes('총점') && cellValue !== '') {
+                        structure.scoreColumns.push({
+                            index: col,
+                            name: headerRow[col],
+                            originalName: headerRow[col]
+                        });
+                        structure.detectedAreas.push(headerRow[col]);
+                    }
+                }
+
+                structure.dataStartRow = structure.headerRow + 1;
+            } else {
+                // 헤더가 없는 경우 데이터 패턴으로 추정
+                for (let i = 0; i < Math.min(data.length, 10); i++) {
+                    const row = data[i];
+                    if (row && row.length >= 3) {
+                        // 첫 번째 숫자 값이 있는 행을 데이터 시작으로 추정
+                        if (typeof row[0] === 'number' || !isNaN(parseInt(row[0]))) {
+                            structure.dataStartRow = i;
+                            structure.studentNumberCol = 1; // 두 번째 열을 학번으로 추정
+                            structure.nameCol = 2; // 세 번째 열을 이름으로 추정
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 과목명 및 학년 감지
+            for (let i = 0; i < Math.min(data.length, 5); i++) {
+                const row = data[i];
+                if (row) {
+                    const rowText = row.join(' ');
+
+                    // 과목명 감지
+                    if (rowText.includes('교과') || rowText.includes('과목')) {
+                        const match = rowText.match(/교과[명:]?\s*[:]?\s*([가-힣\w\s]+)/);
+                        if (match) {
+                            structure.detectedSubject = match[1].trim();
+                        }
+                    }
+
+                    // 학년 감지 (3학년, 3학년도, 등)
+                    const gradeMatch = rowText.match(/(\d+)학년/);
+                    if (gradeMatch) {
+                        structure.detectedGrade = gradeMatch[1];
+                    }
+                }
+            }
+
+            detectedStructure = structure;
+            displayFileAnalysis(structure);
+            generateMapping(structure);
+        }
+
+        // 파일 분석 결과 표시 (간소화)
+        function displayFileAnalysis(structure) {
+            // 파일 분석 정보는 표시하지 않고 바로 분석 섹션만 표시
+            document.getElementById('smartAnalysisSection').style.display = 'block';
+        }
+
+
+        // 영역 매칭 인터페이스 생성
+        function generateMapping(structure) {
+            const container = document.getElementById('mappingInterface');
+            const systemAreas = subjects[currentScoreSubject].areas;
+
+            currentMapping = {};
+
+            let html = `
+                <table class="mapping-table">
+                    <thead>
+                        <tr>
+                            <th>감지된 내용</th>
+                            <th>매칭할 시스템 영역</th>
+                            <th>유사도</th>
+                            <th>확인</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // 점수 관련 열들에 대해 매핑 옵션 생성
+            structure.scoreColumns.forEach(col => {
+                const similarity = findBestMatch(col.name, systemAreas);
+
+                html += `
+                    <tr>
+                        <td><strong>${col.name}</strong></td>
+                        <td>
+                            <select class="mapping-select" onchange="updateMapping(${col.index}, this.value)">
+                                <option value="">-- 선택하세요 --</option>
+                `;
+
+                systemAreas.forEach(area => {
+                    const selected = similarity.bestMatch && similarity.bestMatch.name === area.name ? 'selected' : '';
+                    html += `<option value="${area.name}" ${selected}>${area.name} (${area.maxScore}점)</option>`;
+                });
+
+                html += `
+                            </select>
+                        </td>
+                        <td>
+                            ${similarity.bestMatch ?
+                                `<span class="similarity-score ${getSimilarityClass(similarity.score)}">${Math.round(similarity.score * 100)}%</span>`
+                                : ''}
+                        </td>
+                        <td>
+                            <input type="checkbox" id="confirm_${col.index}"
+                                   onchange="confirmMapping(${col.index}, this.checked)"
+                                   ${similarity.bestMatch && similarity.score > 0.7 ? 'checked' : ''}>
+                            <label for="confirm_${col.index}">매칭 확인</label>
+                        </td>
+                    </tr>
+                `;
+
+                // 자동 매칭 설정
+                if (similarity.bestMatch && similarity.score > 0.7) {
+                    currentMapping[col.index] = similarity.bestMatch.name;
+                    console.log(`자동 매핑: 열 ${col.index} -> ${similarity.bestMatch.name} (${Math.round(similarity.score * 100)}%)`);
+                }
+            });
+
+            html += '</tbody></table>';
+
+            // 매핑되지 않은 시스템 영역 표시
+            const unmappedAreas = systemAreas.filter(area =>
+                !Object.values(currentMapping).includes(area.name)
+            );
+
+            if (unmappedAreas.length > 0) {
+                html += `
+                    <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 4px;">
+                        <strong>⚠️ 매칭되지 않은 영역:</strong> ${unmappedAreas.map(area => area.name).join(', ')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+
+            // DOM이 생성된 후 자동 매핑된 드롭다운 값들을 실제로 설정
+            setTimeout(() => {
+                Object.entries(currentMapping).forEach(([colIndex, areaName]) => {
+                    const select = container.querySelector(`select[onchange*="updateMapping(${colIndex}"]`);
+                    if (select) {
+                        select.value = areaName;
+                        console.log(`드롭다운 설정: 열 ${colIndex} = ${areaName}`);
+                    }
+                });
+                updateConfirmButton();
+            }, 100);
+
+            updateConfirmButton();
+        }
+
+        // 문자열 유사도 계산 (Levenshtein Distance 기반)
+        function calculateSimilarity(str1, str2) {
+            // 정규화
+            const normalize = (str) => str.toLowerCase().replace(/\s+/g, '').replace(/[()]/g, '');
+            const s1 = normalize(str1);
+            const s2 = normalize(str2);
+
+            if (s1 === s2) return 1.0;
+
+            const len1 = s1.length;
+            const len2 = s2.length;
+
+            if (len1 === 0) return len2 === 0 ? 1.0 : 0.0;
+            if (len2 === 0) return 0.0;
+
+            const matrix = Array(len2 + 1).fill().map(() => Array(len1 + 1).fill(0));
+
+            for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+            for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+
+            for (let j = 1; j <= len2; j++) {
+                for (let i = 1; i <= len1; i++) {
+                    const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+                    matrix[j][i] = Math.min(
+                        matrix[j - 1][i] + 1,
+                        matrix[j][i - 1] + 1,
+                        matrix[j - 1][i - 1] + cost
+                    );
+                }
+            }
+
+            const maxLen = Math.max(len1, len2);
+            return (maxLen - matrix[len2][len1]) / maxLen;
+        }
+
+        // 최적 매칭 찾기
+        function findBestMatch(fileName, systemAreas) {
+            let bestMatch = null;
+            let bestScore = 0;
+
+            systemAreas.forEach(area => {
+                const score = calculateSimilarity(fileName, area.name);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = area;
+                }
+            });
+
+            return { bestMatch, score: bestScore };
+        }
+
+        // 유사도 클래스 반환
+        function getSimilarityClass(score) {
+            if (score >= 0.8) return 'similarity-high';
+            if (score >= 0.5) return 'similarity-medium';
+            return 'similarity-low';
+        }
+
+        // 매핑 업데이트
+        function updateMapping(colIndex, areaName) {
+            const checkbox = document.getElementById(`confirm_${colIndex}`);
+
+            if (areaName) {
+                // 드롭다운에서 영역을 선택했을 때 체크박스도 체크
+                checkbox.checked = true;
+                currentMapping[colIndex] = areaName;
+            } else {
+                // 드롭다운에서 선택 해제했을 때 체크박스도 해제
+                checkbox.checked = false;
+                delete currentMapping[colIndex];
+            }
+            updateConfirmButton();
+        }
+
+        // 매핑 확인 체크박스 처리
+        function confirmMapping(colIndex, isChecked) {
+            const select = document.querySelector(`select[onchange*="updateMapping(${colIndex}"]`);
+            const selectedValue = select.value;
+
+            if (isChecked && selectedValue) {
+                // 체크박스가 체크되고 드롭다운에 값이 있으면 매핑 추가
+                currentMapping[colIndex] = selectedValue;
+                console.log(`수동 매핑 확인: 열 ${colIndex} -> ${selectedValue}`);
+            } else {
+                // 체크박스가 해제되면 매핑 제거
+                delete currentMapping[colIndex];
+                console.log(`매핑 해제: 열 ${colIndex}`);
+            }
+            updateConfirmButton();
+        }
+
+        // 확인 버튼 상태 업데이트
+        function updateConfirmButton() {
+            const confirmBtn = document.getElementById('confirmSmartBtn');
+            const hasValidMapping = Object.keys(currentMapping).length > 0;
+
+            console.log('현재 매핑 상태:', currentMapping);
+            console.log('매핑 개수:', Object.keys(currentMapping).length);
+            console.log('버튼 활성화 여부:', hasValidMapping);
+
+            confirmBtn.disabled = !hasValidMapping;
+
+            if (hasValidMapping) {
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.cursor = 'pointer';
+            } else {
+                confirmBtn.style.opacity = '0.5';
+                confirmBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        // 스마트 업로드 취소
+        function cancelSmartUpload() {
+            document.getElementById('smartAnalysisSection').style.display = 'none';
+            document.getElementById('smartFileInput').value = '';
+            smartFileData = null;
+            detectedStructure = null;
+            currentMapping = {};
+        }
+
+        // 스마트 업로드 확인 및 적용
+        function confirmSmartUpload() {
+            console.log('confirmSmartUpload 함수 호출됨');
+            console.log('smartFileData:', !!smartFileData);
+            console.log('detectedStructure:', !!detectedStructure);
+            console.log('currentMapping:', currentMapping);
+            console.log('매핑 개수:', Object.keys(currentMapping).length);
+
+            if (!smartFileData || !detectedStructure || Object.keys(currentMapping).length === 0) {
+                alert('매핑 정보가 올바르지 않습니다.');
+                return;
+            }
+
+            try {
+                const result = processSmartUpload();
+                generateScoreTable();
+                saveScores();
+
+                // 성공 메시지
+                const mappedCount = Object.keys(currentMapping).length;
+                let message = `스마트 파싱 완료!\n`;
+                message += `📊 ${mappedCount}개 영역의 점수가 업로드되었습니다.\n`;
+                message += `👥 ${result.processedCount}명의 학생 점수 처리\n`;
+                if (result.skippedStatsCount > 0) {
+                    message += `📈 ${result.skippedStatsCount}개의 통계 행 자동 건너뛰기`;
+                }
+                alert(message);
+
+                // 초기화
+                cancelSmartUpload();
+
+            } catch (error) {
+                alert('업로드 처리 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 학번 형식 변환 (2/1 → 30201)
+        function convertStudentNumber(originalNum) {
+            if (!originalNum) return '';
+
+            const str = String(originalNum).trim();
+
+            // 이미 완전한 학번 형식인 경우 (5자리 숫자)
+            if (/^\d{5}$/.test(str)) {
+                return str;
+            }
+
+            // 2/1, 2/2 형식인 경우
+            if (/^\d+\/\d+$/.test(str)) {
+                const [classNum, studentNum] = str.split('/');
+                // 감지된 학년이 있으면 사용, 없으면 기본값 3학년
+                const grade = detectedStructure?.detectedGrade || '3';
+                const paddedClass = classNum.padStart(2, '0');
+                const paddedStudent = studentNum.padStart(2, '0');
+                return `${grade}${paddedClass}${paddedStudent}`;
+            }
+
+            // 다른 형식은 그대로 반환
+            return str;
+        }
+
+        // 등록된 학생 중에서 가장 유사한 학번 찾기
+        function findMatchingStudentNumber(originalNum, studentName) {
+            const convertedNum = convertStudentNumber(originalNum);
+
+            // 정확히 일치하는 학번이 있는지 확인
+            if (students[convertedNum]) {
+                return convertedNum;
+            }
+
+            // 이름으로도 찾아보기
+            if (studentName) {
+                for (const [studentNum, student] of Object.entries(students)) {
+                    if (student.name === studentName.trim()) {
+                        return studentNum;
+                    }
+                }
+            }
+
+            // 패턴 매칭 (2/1 → 302XX 형태로 검색)
+            if (/^\d+\/\d+$/.test(String(originalNum))) {
+                const [classNum] = String(originalNum).split('/');
+                const grade = detectedStructure?.detectedGrade || '3';
+                const pattern = new RegExp(`^${grade}${classNum.padStart(2, '0')}`);
+
+                for (const studentNum of Object.keys(students)) {
+                    if (pattern.test(studentNum)) {
+                        // 추가적으로 이름도 확인
+                        if (!studentName || students[studentNum].name === studentName.trim()) {
+                            return studentNum;
+                        }
+                    }
+                }
+            }
+
+            return null; // 매칭되는 학번을 찾지 못함
+        }
+
+        // 통계 행인지 판단하는 함수
+        function isStatisticsRow(studentNum, studentName) {
+            // 학번이 통계 키워드인 경우
+            const statisticsKeywords = [
+                '응시생수', '총점', '평균', '최고점', '최저점',
+                '학년응시생수', '학년총점', '학년평균', '학년최고점', '학년최저점',
+                '전체응시생수', '전체총점', '전체평균', '전체최고점', '전체최저점',
+                '합계', '소계', '계', '총계', '학급평균', '반평균',
+                'sum', 'avg', 'count', 'total', 'average'
+            ];
+
+            const numStr = String(studentNum).toLowerCase();
+            const nameStr = String(studentName || '').toLowerCase();
+
+            // 학번이나 이름에 통계 키워드가 포함된 경우
+            for (const keyword of statisticsKeywords) {
+                if (numStr.includes(keyword.toLowerCase()) || nameStr.includes(keyword.toLowerCase())) {
+                    return true;
+                }
+            }
+
+            // 빈 행이거나 의미없는 데이터인 경우
+            if (!studentNum || studentNum === '' || studentNum === '-') {
+                return true;
+            }
+
+            // 숫자가 아닌 특수 문자만 있는 경우 (===, ---, *** 등)
+            if (/^[^a-zA-Z0-9가-힣\/]+$/.test(numStr)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // 스마트 업로드 데이터 처리
+        function processSmartUpload() {
+            if (!scores[currentScoreSubject]) {
+                scores[currentScoreSubject] = {};
+            }
+
+            let processedCount = 0;
+            let skippedStatsCount = 0;
+            let errorMessages = [];
+
+            // 데이터 행 처리
+            for (let i = detectedStructure.dataStartRow; i < smartFileData.length; i++) {
+                const row = smartFileData[i];
+                if (!row || row.length === 0) continue;
+
+                // 학번 추출 (원본)
+                let originalStudentNum = '';
+                if (detectedStructure.studentNumberCol >= 0 && row[detectedStructure.studentNumberCol]) {
+                    originalStudentNum = String(row[detectedStructure.studentNumberCol]).trim();
+                }
+
+                // 이름 추출 (검증용)
+                let studentName = '';
+                if (detectedStructure.nameCol >= 0 && row[detectedStructure.nameCol]) {
+                    studentName = String(row[detectedStructure.nameCol]).trim();
+                }
+
+                if (!originalStudentNum) continue;
+
+                // 통계 행 필터링 (응시생수, 총점, 평균 등)
+                if (isStatisticsRow(originalStudentNum, studentName)) {
+                    skippedStatsCount++;
+                    console.log(`통계 행 건너뛰기: ${originalStudentNum} (${studentName})`);
+                    continue;
+                }
+
+                // 학번 매칭 (2/1 → 30201 형식 변환 포함)
+                const matchedStudentNum = findMatchingStudentNumber(originalStudentNum, studentName);
+
+                if (!matchedStudentNum) {
+                    errorMessages.push(`${originalStudentNum}(${studentName || '이름없음'}): 매칭되는 학번을 찾을 수 없음`);
+                    continue;
+                }
+
+                console.log(`학번 매칭: ${originalStudentNum} → ${matchedStudentNum} (${studentName})`);
+
+                // 실제 사용할 학번
+                const studentNum = matchedStudentNum;
+
+                // 이름 검증
+                if (studentName && students[studentNum].name !== studentName) {
+                    errorMessages.push(`${studentNum}: 이름 불일치 (등록: ${students[studentNum].name}, 파일: ${studentName})`);
+                }
+
+                // 기존 점수 유지하면서 새로운 점수 추가/업데이트 (증분 업데이트)
+                if (!scores[currentScoreSubject][studentNum]) {
+                    scores[currentScoreSubject][studentNum] = {};
+                }
+
+                // 매핑된 영역별 점수 처리
+                Object.entries(currentMapping).forEach(([colIndex, areaName]) => {
+                    const score = row[parseInt(colIndex)];
+                    if (score !== undefined && score !== '') {
+                        scores[currentScoreSubject][studentNum][areaName] = parseInt(score) || 0;
+                    }
+                });
+
+                processedCount++;
+            }
+
+            // 오류 메시지 표시
+            if (errorMessages.length > 0 && errorMessages.length < 10) {
+                const showErrors = confirm(`다음 오류가 발견되었습니다:\n${errorMessages.slice(0, 5).join('\n')}${errorMessages.length > 5 ? '\n...' : ''}\n\n계속 진행하시겠습니까?`);
+                if (!showErrors) {
+                    throw new Error('사용자가 취소했습니다.');
+                }
+            }
+
+            console.log(`처리 완료: ${processedCount}명의 학생 점수 업데이트, ${skippedStatsCount}개의 통계 행 건너뛰기`);
+
+            return {
+                processedCount: processedCount,
+                skippedStatsCount: skippedStatsCount,
+                errorCount: errorMessages.length
+            };
+        }
 
 
         // Firebase 리스너 정리 (페이지 언로드 시)
